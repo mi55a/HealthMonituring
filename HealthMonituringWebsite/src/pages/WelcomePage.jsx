@@ -33,7 +33,9 @@ export default function WelcomePage() {
 
   const handleNavigation = (page) => {
     // Connect navigation when the other pages are ready.
-    console.log("Navigate to:", page);
+    if (page === "settings") {
+      window.location.href = "/settings";
+    }
   };
 
   return (

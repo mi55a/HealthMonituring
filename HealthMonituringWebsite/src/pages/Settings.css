@@ -1,23 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto+Slab:wght@400;500&display=swap');
+/* ========================================
+   AstroHealth Settings - Minimal Theme
+======================================== */
 
-/* Everything is scoped under .settings-page so it can't clash with global styles. */
 .settings-page {
-  --settings-blue: #4169c2;
-  --settings-blue-dark: #2f4f9e;
-  --settings-page: #f5f8fd;
-  --settings-ink: #1f2a44;
-  --settings-muted: #5d6b86;
-  --settings-line: #7c8497;
-  --settings-focus: #f2b134;
-  --settings-ok: #2e7d4f;
+  --settings-navy: #102344;
+  --settings-blue: #2478c5;
+  --settings-light-blue: #eaf5fb;
+  --settings-purple: #7534d8;
+  --settings-purple-hover: #6426c5;
+  --settings-muted: #718096;
+  --settings-border: #dbe4ed;
 
-  box-sizing: border-box;
   width: 100%;
   min-height: 100vh;
   margin: 0;
-  background: var(--settings-page);
-  color: var(--settings-ink);
-  font-family: 'Open Sans', system-ui, sans-serif;
+
+  background: #ffffff;
+  color: var(--settings-navy);
+  font-family: "Chakra Petch", sans-serif;
   text-align: left;
 }
 
@@ -27,155 +27,349 @@
   box-sizing: border-box;
 }
 
+/* ========================================
+   Header
+======================================== */
+
 .settings-header {
+  position: relative;
+
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 28px max(24px, 4vw);
-  background: var(--settings-blue);
-  border-bottom: 1px solid var(--settings-blue-dark);
-  color: #fff;
+  justify-content: center;
+
+  width: 100%;
+  padding: 35px 5%;
+  background: #ffffff;
 }
 
-.settings-gear {
-  width: 52px;
-  height: 52px;
-  flex: none;
+/* Centered Settings Title */
+
+.settings-header-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.settings-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 40px;
+  height: 40px;
+
+  background: transparent;
+  color: #102344;
+  border: none;
+  border-radius: 0;
 }
 
 .settings-header h1 {
   margin: 0;
-  font-family: 'Roboto Slab', Georgia, serif;
-  font-weight: 400;
-  font-size: clamp(2rem, 5vw, 3rem);
-  letter-spacing: 0.01em;
-  color: #fff;
+
+  color: var(--settings-navy);
+  font-size: clamp(32px, 4vw, 46px);
+  font-weight: 700;
+  letter-spacing: -1px;
 }
 
-.settings-main {
-  padding: 36px max(24px, 4vw) 64px;
+/* ========================================
+   Home Button - Top Left
+======================================== */
+
+.settings-home {
+  position: absolute;
+  left: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  padding: 12px 20px;
+
+  background: var(--settings-light-blue);
+  color: var(--settings-navy);
+
+  border: none;
+  border-radius: 25px;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+
+  transition: background 0.2s ease;
 }
+
+.settings-home:hover {
+  background: #dceefa;
+}
+
+.settings-home:focus-visible {
+  outline: 3px solid #78b8dc;
+  outline-offset: 3px;
+}
+
+/* ========================================
+   Main Content - Center Everything
+======================================== */
+
+.settings-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  width: 100%;
+  padding: 30px 5% 70px;
+}
+
+/* ========================================
+   Centered User Information Card
+======================================== */
 
 .settings-card {
   width: 100%;
-  max-width: 340px;
-  background: var(--settings-page);
-  border: 1px solid var(--settings-line);
+  max-width: 480px;
+  margin: 0 auto;
+
+  background: #ffffff;
+  border: 1px solid var(--settings-border);
+  border-radius: 18px;
+
+  overflow: hidden;
 }
 
-.settings-card > h2 {
-  margin: 0;
-  padding: 12px 16px;
-  background: var(--settings-blue);
-  color: #fff;
+/* Light Blue Card Header */
+
+.settings-card-header {
+  padding: 22px 28px;
+  background: #e8f1fc;
   text-align: center;
-  font-size: 1.25rem;
+}
+
+.settings-card-header h2 {
+  margin: 0;
+
+  color: var(--settings-navy);
+  font-size: 22px;
   font-weight: 700;
 }
+
+/* ========================================
+   Form Layout
+======================================== */
 
 .settings-form {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  padding: 22px 20px 26px;
+  gap: 22px;
+
+  width: 100%;
+  padding: 28px;
 }
 
 .settings-field {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  gap: 9px;
+
   width: 100%;
 }
 
 .settings-field label,
 .settings-label {
-  font-size: 1.05rem;
+  color: var(--settings-navy);
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.settings-page input[type='text'],
+/* ========================================
+   Inputs
+======================================== */
+
+.settings-page input[type="text"],
 .settings-page select {
-  font: inherit;
-  font-size: 0.9rem;
-  color: var(--settings-ink);
-  background: #fff;
-  border: 1px solid #dfe5f0;
-  border-radius: 999px;
-  padding: 8px 16px;
   width: 100%;
-  max-width: 220px;
-  text-align: center;
+  padding: 12px 15px;
+
+  background: #ffffff;
+  color: var(--settings-navy);
+
+  border: 1px solid #aabbd2;
+  border-radius: 10px;
+
+  font-family: inherit;
+  font-size: 14px;
+
+  transition: border-color 0.2s ease;
 }
 
-.settings-page select {
-  text-align-last: center;
-  cursor: pointer;
-}
-
-.settings-dob {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.settings-dob select {
-  width: auto;
-  max-width: none;
-  flex: 0 1 auto;
-  padding: 8px 10px;
+.settings-page input[type="text"]:hover,
+.settings-page select:hover {
+  border-color: var(--settings-blue);
 }
 
 .settings-page input:focus-visible,
 .settings-page select:focus-visible {
-  outline: 3px solid var(--settings-focus);
+  outline: 2px solid var(--settings-blue);
   outline-offset: 2px;
 }
 
-.settings-save {
-  font: inherit;
-  font-size: 1rem;
-  font-weight: 600;
-  min-width: 140px;
-  padding: 10px 28px;
-  border: none;
-  border-radius: 999px;
-  background: var(--settings-blue);
-  color: #fff;
+/* ========================================
+   Birth Date
+======================================== */
+
+.settings-dob {
+  display: grid;
+  grid-template-columns: 1.5fr 0.8fr 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.settings-dob select {
+  min-width: 0;
   cursor: pointer;
 }
 
-.settings-save:hover:not(:disabled) {
-  background: var(--settings-blue-dark);
+/* ========================================
+   Save Button
+======================================== */
+
+.settings-save {
+  width: 100%;
+  padding: 14px 25px;
+  margin-top: 10px;
+
+  background: var(--settings-purple);
+  color: #ffffff;
+
+  border: none;
+  border-radius: 12px;
+
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
-.settings-save:focus-visible {
-  outline: 3px solid var(--settings-focus);
-  outline-offset: 2px;
+.settings-save:hover:not(:disabled) {
+  background: var(--settings-purple-hover);
+  transform: translateY(-2px);
 }
 
 .settings-save:disabled {
   background: #c5cde0;
-  color: #fff;
+  color: #ffffff;
   cursor: not-allowed;
 }
 
+.settings-save:focus-visible {
+  outline: 3px solid #78b8dc;
+  outline-offset: 3px;
+}
+
+/* ========================================
+   Save Status
+======================================== */
+
 .settings-status {
-  min-height: 1.2em;
-  margin: -6px 0 0;
-  font-size: 0.85rem;
-  color: var(--settings-ok);
+  min-height: 18px;
+  margin: -8px 0 0;
+
+  color: #25845d;
+  font-size: 12px;
   text-align: center;
 }
 
 .settings-status.is-error {
-  color: #b3261e;
+  color: #d94740;
 }
 
+/* ========================================
+   Footer Note - Centered
+======================================== */
+
 .settings-note {
-  max-width: 340px;
-  margin: 20px 0 0;
-  font-size: 0.85rem;
+  max-width: 480px;
+  margin: 20px auto 0;
+
   color: var(--settings-muted);
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* ========================================
+   Responsive Design
+======================================== */
+
+@media (max-width: 600px) {
+  .settings-header {
+    padding: 90px 15px 20px;
+  }
+
+  .settings-home {
+    top: 20px;
+    left: 15px;
+    transform: none;
+
+    padding: 10px 13px;
+    font-size: 11px;
+    gap: 6px;
+  }
+
+  .settings-header-title {
+    gap: 10px;
+  }
+
+  .settings-icon-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+  }
+
+  .settings-header h1 {
+    font-size: 28px;
+  }
+
+  .settings-main {
+    padding: 25px 15px 60px;
+  }
+
+  .settings-card {
+    max-width: 100%;
+  }
+
+  .settings-card-header {
+    padding: 20px;
+  }
+
+  .settings-card-header h2 {
+    font-size: 19px;
+  }
+
+  .settings-form {
+    padding: 22px 20px;
+    gap: 20px;
+  }
+
+  .settings-dob {
+    grid-template-columns: 1.4fr 0.8fr 1fr;
+    gap: 6px;
+  }
+
+  .settings-dob select {
+    padding: 10px 6px;
+    font-size: 12px;
+  }
 }
