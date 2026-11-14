@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto+Slab:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #4169c2;
+    --blue-dark: #2f4f9e;
+    --page: #f5f8fd;
+    --ink: #1f2a44;
+    --muted: #5d6b86;
+    --line: #7c8497;
+    --field: #ffffff;
+    --focus: #f2b134;
+    --ok: #2e7d4f;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: "Open Sans", system-ui, sans-serif;
+    background: var(--page);
+    color: var(--ink);
+  }
+
+  .page-header {
+    background: var(--blue);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 28px max(24px, 4vw);
+    border-bottom: 1px solid var(--blue-dark);
+  }
+  .page-header svg { width: 52px; height: 52px; flex: none; }
+  .page-header h1 {
+    margin: 0;
+    font-family: "Roboto Slab", Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(2rem, 5vw, 3rem);
+    letter-spacing: 0.01em;
+  }
+
+  main { padding: 36px max(24px, 4vw) 64px; }
+
+  .card {
+    width: 100%;
+    max-width: 340px;
+    background: var(--page);
+    border: 1px solid var(--line);
+  }
+  .card > h2 {
+    margin: 0;
+    padding: 12px 16px;
+    background: var(--blue);
+    color: #fff;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  .card form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding: 22px 20px 26px;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+  .field label, .field .label {
+    font-size: 1.05rem;
+  }
+  input[type="text"], select {
+    font: inherit;
+    font-size: 0.9rem;
+    color: var(--ink);
+    background: var(--field);
+    border: 1px solid #dfe5f0;
+    border-radius: 999px;
+    padding: 8px 16px;
+    width: 100%;
+    max-width: 220px;
+    text-align: center;
+  }
+  select { text-align-last: center; cursor: pointer; }
+  .dob { display: flex; gap: 8px; width: 100%; justify-content: center; }
+  .dob select { padding: 8px 10px; max-width: none; width: auto; flex: 0 1 auto; }
+  input:focus-visible, select:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .status {
+    min-height: 1.2em;
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--ok);
+    text-align: center;
+  }
+  .note {
+    margin: 20px 0 0;
+    max-width: 340px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <svg viewBox="0 0 48 48" aria-hidden="true">
+    <g fill="currentColor">
+      <circle cx="24" cy="24" r="14"/>
+      <rect x="20" y="2" width="8" height="10" rx="2"/>
+      <rect x="20" y="2" width="8" height="10" rx="2" transform="rotate(45 24 24)"/>
+      <rect x="20" y="2" width="8" height="10" rx="2" transform="rotate(90 24 24)"/>
+      <rect x="20" y="2" width="8" height="10" rx="2" transform="rotate(135 24 24)"/>
+      <rect x="20" y="2" width="8" height="10" rx="2" transform="rotate(180 24 24)"/>
+      <rect x="20" y="2" width="8" height="10" rx="2" transform="rotate(225 24 24)"/>
+      <rect x="20" y="2" width="8" height="10" rx="2" transform="rotate(270 24 24)"/>
+      <rect x="20" y="2" width="8" height="10" rx="2" transform="rotate(315 24 24)"/>
+    </g>
+    <circle cx="24" cy="24" r="6" fill="#4169c2"/>
+  </svg>
+  <h1>Settings</h1>
+</header>
+
+<main>
+  <section class="card" aria-labelledby="user-info-title">
+    <h2 id="user-info-title">User Information</h2>
+    <form id="user-form" autocomplete="off" novalidate>
+      <div class="field">
+        <label for="first-name">First Name:</label>
+        <input type="text" id="first-name" name="firstName" maxlength="50">
+      </div>
+      <div class="field">
+        <label for="last-name">Last Name:</label>
+        <input type="text" id="last-name" name="lastName" maxlength="50">
+      </div>
+      <div class="field">
+        <span class="label" id="dob-label">Birth Date:</span>
+        <div class="dob" role="group" aria-labelledby="dob-label">
+          <select id="dob-month" name="dobMonth" aria-label="Birth month"></select>
+          <select id="dob-day" name="dobDay" aria-label="Birth day"></select>
+          <select id="dob-year" name="dobYear" aria-label="Birth year"></select>
+        </div>
+      </div>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+  <p class="note">Signed in as a placeholder user until authentication is added. Changes save on this device only.</p>
+</main>
+
+<script>
+(function () {
+  // Dummy user standing in for authentication (see Miro sticky note).
+  var DUMMY_USER = { firstName: "Alex", lastName: "Rivera", dobMonth: "4", dobDay: "12", dobYear: "1985" };
+  var KEY = "healthMonitoring.user";
+
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var form = document.getElementById("user-form");
+  var status = document.getElementById("status");
+  var monthEl = document.getElementById("dob-month");
+  var dayEl = document.getElementById("dob-day");
+  var yearEl = document.getElementById("dob-year");
+  var timer;
+
+  function option(value, text) {
+    var o = document.createElement("option");
+    o.value = value; o.textContent = text;
+    return o;
+  }
+
+  MONTHS.forEach(function (m, i) { monthEl.appendChild(option(String(i + 1), m)); });
+  for (var d = 1; d <= 31; d++) dayEl.appendChild(option(String(d), String(d)));
+  var thisYear = new Date().getFullYear();
+  for (var y = thisYear - 18; y >= thisYear - 90; y--) yearEl.appendChild(option(String(y), String(y)));
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) return Object.assign({}, DUMMY_USER, JSON.parse(raw));
+    } catch (e) {}
+    return Object.assign({}, DUMMY_USER);
+  }
+
+  function apply(user) {
+    form.firstName.value = user.firstName;
+    form.lastName.value = user.lastName;
+    monthEl.value = user.dobMonth;
+    dayEl.value = user.dobDay;
+    yearEl.value = user.dobYear;
+  }
+
+  function clampDay() {
+    // Keep the day valid for the chosen month and year.
+    var max = new Date(Number(yearEl.value), Number(monthEl.value), 0).getDate();
+    Array.prototype.forEach.call(dayEl.options, function (o) { o.hidden = Number(o.value) > max; o.disabled = o.hidden; });
+    if (Number(dayEl.value) > max) dayEl.value = String(max);
+  }
+
+  function save() {
+    clampDay();
+    var user = {
+      firstName: form.firstName.value.trim(),
+      lastName: form.lastName.value.trim(),
+      dobMonth: monthEl.value,
+      dobDay: dayEl.value,
+      dobYear: yearEl.value
+    };
+    try {
+      localStorage.setItem(KEY, JSON.stringify(user));
+      status.textContent = "Saved";
+    } catch (e) {
+      status.textContent = "";
+    }
+    clearTimeout(timer);
+    timer = setTimeout(function () { status.textContent = ""; }, 1800);
+  }
+
+  apply(load());
+  clampDay();
+  form.addEventListener("input", save);
+  form.addEventListener("change", save);
+  form.addEventListener("submit", function (e) { e.preventDefault(); });
+})();
+</script>
+</body>
+</html>
