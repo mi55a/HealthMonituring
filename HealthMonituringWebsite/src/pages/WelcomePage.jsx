@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { ShieldCheck, AlertTriangle } from "lucide-react";
 import ProfileDropdown from "./ProfileDropdown";
+import { useNavigate } from "react-router-dom";
 import "./WelcomePage.css";
 
 const alertStates = {
@@ -24,17 +25,27 @@ const alertStates = {
 
 export default function WelcomePage() {
   const [showAlerts, setShowAlerts] = useState(false);
-
+  const navigate = useNavigate();
   // Demo status. Replace with actual sensor data later.
   const environmentStatus = "safe";
 
   const currentAlert = alertStates[environmentStatus];
   const AlertIcon = currentAlert.icon;
 
+  
   const handleNavigation = (page) => {
-    // Connect navigation when the other pages are ready.
-    console.log("Navigate to:", page);
+    const routes = {
+      dashboard: "/dashboard",
+      report: "/dashboard",
+      assistant: "/ai-analysis",
+      settings: "/settings",
+    };
+
+    if (routes[page]) {
+      navigate(routes[page]);
+    }
   };
+
 
   return (
     <div className="welcome-page">
