@@ -518,3 +518,23 @@
     grid-template-columns: 1fr;
   }
 }
+
+.ai-page .main-header > .profile-dropdown {
+  justify-self: start;
+}
+
+.ai-header-spacer {
+  justify-self: end;
+  width: 120px;
+}
+
+@media (max-width: 600px) {
+  .ai-page .main-header > .profile-dropdown {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ai-header-spacer {
+    display: none;
+  }
+}

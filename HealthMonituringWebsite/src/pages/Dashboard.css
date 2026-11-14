@@ -127,10 +127,17 @@
   cursor: not-allowed;
 }
 
-.dashboard-page .actions button:last-child {
+/* Body Map and AI Assistant buttons */
+.dashboard-page .actions button:nth-child(3),
+.dashboard-page .actions button:nth-child(4) {
   background: var(--purple);
   border-color: var(--purple);
   color: #ffffff;
+}
+
+.dashboard-page .actions button:nth-child(3):hover,
+.dashboard-page .actions button:nth-child(4):hover {
+  background: #6426c5;
 }
 
 .dashboard-page .actions button:last-child:hover {
@@ -331,6 +338,10 @@
   display: none;
 }
 
+.dashboard-nav > .profile-dropdown {
+  position: relative;
+  z-index: 100;
+}
 
 
 

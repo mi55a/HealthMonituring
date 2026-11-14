@@ -1,8 +1,8 @@
 
 import { useState } from "react";
 import { ShieldCheck, AlertTriangle } from "lucide-react";
-import ProfileDropdown from "./ProfileDropdown";
 import { useNavigate } from "react-router-dom";
+import ProfileDropdown from "./ProfileDropdown";
 import "./WelcomePage.css";
 
 const alertStates = {
@@ -26,39 +26,19 @@ const alertStates = {
 export default function WelcomePage() {
   const [showAlerts, setShowAlerts] = useState(false);
   const navigate = useNavigate();
-  // Demo status. Replace with actual sensor data later.
-  const environmentStatus = "safe";
 
+  // Demo status; replace with sensor data later.
+  const environmentStatus = "safe";
   const currentAlert = alertStates[environmentStatus];
   const AlertIcon = currentAlert.icon;
 
-  
-  const handleNavigation = (page) => {
-    const routes = {
-      dashboard: "/dashboard",
-      report: "/dashboard",
-      assistant: "/ai-analysis",
-      settings: "/settings",
-    };
-
-    if (routes[page]) {
-      navigate(routes[page]);
-    }
-  };
-
-
   return (
     <div className="welcome-page">
-
-      {/* Header */}
       <header className="welcome-header">
-
-        {/* Profile Dropdown */}
         <div className="header-left">
-          <ProfileDropdown onNavigate={handleNavigation} />
+          <ProfileDropdown />
         </div>
 
-        {/* Environmental Alerts */}
         <div className="alerts-container">
           <button
             type="button"
@@ -85,9 +65,7 @@ export default function WelcomePage() {
                 {currentAlert.message}
               </p>
 
-              <div
-                className={`alerts-status status-${environmentStatus}`}
-              >
+              <div className={`alerts-status status-${environmentStatus}`}>
                 <span className="status-dot" />
                 <span>{currentAlert.label}</span>
               </div>
@@ -96,13 +74,8 @@ export default function WelcomePage() {
         </div>
       </header>
 
-      {/* Main Welcome Section */}
       <main className="welcome-content">
-
-        {/* Cosmic AstroHealth Logo */}
         <div className="cosmic-logo">
-
-          {/* Thin Cosmic Orbit */}
           <svg
             className="cosmic-orbit"
             viewBox="0 0 600 230"
@@ -121,7 +94,6 @@ export default function WelcomePage() {
                 <stop offset="100%" stopColor="#C7E4FF" />
               </linearGradient>
             </defs>
-
             <ellipse
               cx="300"
               cy="115"
@@ -134,57 +106,34 @@ export default function WelcomePage() {
             />
           </svg>
 
-          {/* Golden Stars */}
-          <svg
-            className="cosmic-star star-one"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z"
-              fill="#F4C95D"
-            />
-          </svg>
+          {["star-one", "star-two", "star-three"].map((star) => (
+            <svg
+              key={star}
+              className={`cosmic-star ${star}`}
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z"
+                fill="#F4C95D"
+              />
+            </svg>
+          ))}
 
-          <svg
-            className="cosmic-star star-two"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z"
-              fill="#F4C95D"
-            />
-          </svg>
-
-          <svg
-            className="cosmic-star star-three"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z"
-              fill="#F4C95D"
-            />
-          </svg>
-
-          {/* AstroHealth Title */}
           <h1 className="brand-title">
             <span className="brand-astro">Astro</span>
             <span className="brand-health">Health</span>
           </h1>
         </div>
 
-        {/* Welcome Message */}
         <p className="welcome-subtitle">
           Welcome, Astronaut!
         </p>
 
-        {/* Get Started Button */}
         <button
           type="button"
           className="get-started-btn"
-          onClick={() => handleNavigation("dashboard")}
+          onClick={() => navigate("/dashboard")}
         >
           Get Started
         </button>

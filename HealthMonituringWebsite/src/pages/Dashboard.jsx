@@ -1,12 +1,11 @@
-
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Home } from "lucide-react";
+import ProfileDropdown from "./ProfileDropdown";
+import "./WelcomePage.css";
 import "./Dashboard.css";
 
 const storageKey = "healthmonitoring.dashboard.v1";
 
-// Empty fields so astronauts must enter their information.
 const initialData = {
   name: "",
   heartRate: "",
@@ -15,11 +14,9 @@ const initialData = {
   stressLevel: "",
 };
 
-// Check whether the astronaut has previously completed setup.
 function readSavedData() {
   try {
     const raw = localStorage.getItem(storageKey);
-
     if (!raw) return null;
 
     const data = JSON.parse(raw);
@@ -27,23 +24,19 @@ function readSavedData() {
     const valid =
       typeof data?.name === "string" &&
       data.name.trim().length > 0 &&
-
       data.heartRate !== "" &&
       data.heartRate != null &&
       Number.isFinite(Number(data.heartRate)) &&
       Number(data.heartRate) > 0 &&
-
       data.bloodPressure !== "" &&
       data.bloodPressure != null &&
       Number.isFinite(Number(data.bloodPressure)) &&
       Number(data.bloodPressure) > 0 &&
-
       data.sleepHours !== "" &&
       data.sleepHours != null &&
       Number.isFinite(Number(data.sleepHours)) &&
       Number(data.sleepHours) >= 0 &&
       Number(data.sleepHours) <= 24 &&
-
       data.stressLevel !== "" &&
       data.stressLevel != null &&
       Number.isFinite(Number(data.stressLevel)) &&
@@ -58,24 +51,17 @@ function readSavedData() {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-
   const [data, setData] = useState(readSavedData);
-
   const [draft, setDraft] = useState(
     () => readSavedData() ?? { ...initialData }
   );
-
   const [isEditing, setIsEditing] = useState(false);
-
   const dialogRef = useRef(null);
 
-  // Require setup if no valid data exists.
   const needsSetup = !data || isEditing;
 
-  // Automatically open or close the setup modal.
   useEffect(() => {
     const dialog = dialogRef.current;
-
     if (!dialog) return;
 
     if (needsSetup && !dialog.open) {
@@ -87,7 +73,6 @@ export default function Dashboard() {
     }
   }, [needsSetup]);
 
-  // Save astronaut information.
   function saveData(event) {
     event.preventDefault();
 
@@ -98,11 +83,7 @@ export default function Dashboard() {
 
     if (!nextData.name) {
       const nameInput = event.currentTarget.elements.name;
-
-      nameInput.setCustomValidity(
-        "Please enter your display name."
-      );
-
+      nameInput.setCustomValidity("Please enter your display name.");
       event.currentTarget.reportValidity();
       return;
     }
@@ -125,21 +106,16 @@ export default function Dashboard() {
       return;
     }
 
-    // Save completed information.
     setData(nextData);
     setIsEditing(false);
 
     try {
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify(nextData)
-      );
+      localStorage.setItem(storageKey, JSON.stringify(nextData));
     } catch {
       // Keep data in memory if local storage is unavailable.
     }
   }
 
-  // Open the form to edit existing information.
   function handleEdit() {
     setDraft(data ?? { ...initialData });
     setIsEditing(true);
@@ -147,65 +123,28 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-page">
+      <nav className="dashboard-nav" aria-label="Main navigation">
+        <ProfileDropdown />
 
-      {/* =====================================
-          Navigation
-      ===================================== */}
-
-      <nav
-        className="dashboard-nav"
-        aria-label="Main navigation"
-      >
-
-        {/* Home Button */}
-        <button
-          type="button"
-          className="dashboard-home"
-          onClick={() => navigate("/")}
-        >
-          <Home size={18} />
-          Home
-        </button>
-
-        {/* AstroHealth Logo */}
         <div className="title-dashboard">
           <span>Astro</span>
-          <span className="dashboard-brand-blue">
-            Health
-          </span>
+          <span className="dashboard-brand-blue">Health</span>
         </div>
 
         <div className="dashboard-nav-spacer" />
-
       </nav>
 
-      {/* =====================================
-          Dashboard Content
-          Hidden until setup is completed
-      ===================================== */}
-
-      <main
-        className="dashboard-main"
-        hidden={!data}
-      >
-
-        {/* Welcome Heading */}
+      <main className="dashboard-main" hidden={!data}>
         <header className="dashboard-heading">
           <h1>
             {data
               ? `Welcome, ${data.name}`
               : "Welcome to your dashboard"}
           </h1>
-
           <p>Your daily health overview</p>
         </header>
 
-        {/* =====================================
-            Quick Actions
-        ===================================== */}
-
         <section aria-labelledby="quick-actions-title">
-
           <h2
             id="quick-actions-title"
             className="dashboard-section-title"
@@ -214,7 +153,6 @@ export default function Dashboard() {
           </h2>
 
           <div className="actions">
-
             <button type="button" disabled>
               Physical Health Stats
             </button>
@@ -223,7 +161,10 @@ export default function Dashboard() {
               Mental Health Stats
             </button>
 
-            <button type="button" disabled>
+            <button
+              type="button"
+              onClick={() => navigate("/health-stats")}
+            >
               Body Map
             </button>
 
@@ -233,25 +174,13 @@ export default function Dashboard() {
             >
               AI Assistant
             </button>
-
           </div>
         </section>
 
-        {/* =====================================
-            Health Summary
-        ===================================== */}
-
-        <section
-          aria-label="Health metrics"
-          className="metrics"
-        >
-
+        <section aria-label="Health metrics" className="metrics">
           <article className="dashboard-summary-card">
-
             <div className="dashboard-card-heading">
-
               <h2>Summary for Today</h2>
-
               <button
                 type="button"
                 className="dashboard-edit"
@@ -259,68 +188,34 @@ export default function Dashboard() {
               >
                 Edit Data
               </button>
-
             </div>
 
             <div className="summary-grid">
-
               {[
-                [
-                  "Heart Rate",
-                  data?.heartRate,
-                  "bpm",
-                ],
-                [
-                  "Blood Pressure",
-                  data?.bloodPressure,
-                  "mm Hg",
-                ],
-                [
-                  "Sleep",
-                  data?.sleepHours,
-                  "hours",
-                ],
-                [
-                  "Stress Level",
-                  data?.stressLevel,
-                  "/10",
-                ],
+                ["Heart Rate", data?.heartRate, "bpm"],
+                ["Blood Pressure", data?.bloodPressure, "mm Hg"],
+                ["Sleep", data?.sleepHours, "hours"],
+                ["Stress Level", data?.stressLevel, "/10"],
               ].map(([label, value, unit]) => (
-
-                <div
-                  className="summary-row"
-                  key={label}
-                >
-
+                <div className="summary-row" key={label}>
                   <span>{label}</span>
-
                   <strong>
                     {value ?? "—"}{" "}
                     {value != null ? unit : ""}
                   </strong>
-
                 </div>
-
               ))}
-
             </div>
           </article>
         </section>
-
       </main>
-
-      {/* =====================================
-          Required Astronaut Setup Modal
-      ===================================== */}
 
       <dialog
         ref={dialogRef}
         className="dashboard-dialog"
         aria-labelledby="setup-title"
         aria-describedby="setup-description"
-
         onCancel={(event) => {
-          // Prevent closing before initial setup.
           if (!data) {
             event.preventDefault();
           } else {
@@ -329,29 +224,19 @@ export default function Dashboard() {
           }
         }}
       >
-
         <h2 id="setup-title">
-          {data
-            ? "Edit Your Information"
-            : "Set Up Your Dashboard"}
+          {data ? "Edit Your Information" : "Set Up Your Dashboard"}
         </h2>
 
-        <p
-          id="setup-description"
-          className="muted"
-        >
+        <p id="setup-description" className="muted">
           {data
             ? "Update your health information below."
             : "Please complete your health information before accessing your dashboard. All fields are required."}
         </p>
 
-        {/* Setup Form */}
         <form onSubmit={saveData}>
-
-          {/* Display Name */}
           <label>
             Display Name
-
             <input
               name="name"
               type="text"
@@ -360,10 +245,8 @@ export default function Dashboard() {
               maxLength={50}
               placeholder="Enter your name"
               value={draft.name}
-
               onChange={(event) => {
                 event.target.setCustomValidity("");
-
                 setDraft({
                   ...draft,
                   name: event.target.value,
@@ -371,8 +254,6 @@ export default function Dashboard() {
               }}
             />
           </label>
-
-          {/* Health Information Fields */}
 
           {[
             {
@@ -405,45 +286,30 @@ export default function Dashboard() {
               max: 10,
               step: "any",
             },
-          ].map(
-            ({
-              key,
-              label,
-              placeholder,
-              ...constraints
-            }) => (
+          ].map(({ key, label, placeholder, ...constraints }) => (
+            <label key={key}>
+              {label}
+              <input
+                type="number"
+                required
+                placeholder={placeholder}
+                {...constraints}
+                value={draft[key]}
+                onChange={(event) =>
+                  setDraft({
+                    ...draft,
+                    [key]: event.target.value,
+                  })
+                }
+              />
+            </label>
+          ))}
 
-              <label key={key}>
-                {label}
-
-                <input
-                  type="number"
-                  required
-                  placeholder={placeholder}
-                  {...constraints}
-                  value={draft[key]}
-
-                  onChange={(event) =>
-                    setDraft({
-                      ...draft,
-                      [key]: event.target.value,
-                    })
-                  }
-                />
-              </label>
-
-            )
-          )}
-
-          {/* Form Actions */}
           <div className="form-actions">
-
-            {/* Cancel only when editing */}
             {data && (
               <button
                 type="button"
                 className="dashboard-cancel"
-
                 onClick={() => {
                   setDraft(data);
                   setIsEditing(false);
@@ -453,22 +319,12 @@ export default function Dashboard() {
               </button>
             )}
 
-            {/* Required Submit Button */}
-            <button
-              type="submit"
-              className="primary"
-            >
-              {data
-                ? "Save Changes"
-                : "View Dashboard"}
+            <button type="submit" className="primary">
+              {data ? "Save Changes" : "View Dashboard"}
             </button>
-
           </div>
-
         </form>
-
       </dialog>
-
     </div>
   );
 }

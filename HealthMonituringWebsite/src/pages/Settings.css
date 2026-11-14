@@ -373,3 +373,22 @@
     font-size: 12px;
   }
 }
+.settings-header {
+  overflow: visible;
+}
+
+.settings-profile {
+  position: absolute;
+  left: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+}
+
+@media (max-width: 600px) {
+  .settings-profile {
+    top: 20px;
+    left: 15px;
+    transform: none;
+  }
+}
