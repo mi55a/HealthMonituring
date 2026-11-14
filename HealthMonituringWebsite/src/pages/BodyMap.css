@@ -1,15 +1,13 @@
-/* Font: swap "Chakra Petch" for whatever the home page uses (check its CSS for font-family). */
-@import url("https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap");
-
 /* Colours taken from the AstroHealth home page. Adjust to match exactly. */
 .bodymap-page {
   --font: "Chakra Petch", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --navy: #13233f;
-  --blue: #1a6fc1;
-  --purple: #6c2bd9;
-  --gray: #5f6b7a;
-  --line: #e3e8ef;
-  --pill-blue: #e3f0fb;
+  --navy: #102344;
+  --blue: #2478c5;
+  --purple: #7534d8;
+  --purple-hover: #6426c5;
+  --gray: #718096;
+  --line: #dbe4ed;
+  --pill-blue: #eaf5fb;
   --pill-red-bg: #fde8e8;
   --pill-red: #e04848;
   --panel: #f5f8fc;
