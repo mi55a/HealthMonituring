@@ -1,0 +1,157 @@
+/* Colours from the team's Miro colour palette. Change these to match exactly. */
+.bodymap-page {
+  --bg: #ffffff;
+  --header-blue: #bcd3f7;
+  --nav-lavender: #e2ddff;
+  --main-blue: #2152a3;
+  --panel-blue: #cddff9;
+  --teal: #0e8a8a;
+  --purple: #5b30d6;
+  --ink: #1b2a41;
+  --healthy: #34c27a;
+  --warning: #c98a3b;
+  --critical: #e8344a;
+
+  text-align: left;
+  width: 100%;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Header and navigation */
+.bm-topbar {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--header-blue);
+  padding: 10px 20px;
+}
+.bm-gear { font-size: 20px; }
+.bm-brand { font-weight: 700; font-size: 18px; flex: 1; text-align: center; margin-right: 32px; }
+
+.bm-nav {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--nav-lavender);
+  padding: 8px 20px;
+}
+.bm-profile {
+  background: #fff; border: 1px solid #c9c4ee; border-radius: 6px;
+  padding: 6px 12px; font-size: 13px; color: var(--ink); cursor: pointer;
+}
+.bm-tab {
+  background: var(--ink); color: #fff;
+  border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600;
+}
+
+/* Main area */
+.bm-main { max-width: 1200px; margin: 0 auto; padding: 24px; box-sizing: border-box; }
+.bm-title { margin: 0 0 16px; font-size: 26px; }
+
+.bm-layout { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+
+/* Figure on a teal grid, like the Miro design */
+.bm-figure-card {
+  flex: none;
+  width: 300px; max-width: 100%;
+  border-radius: 10px;
+  padding: 14px;
+  box-sizing: border-box;
+  background-color: var(--teal);
+  background-image:
+    linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px),
+    linear-gradient(180deg, #0b7f86 0%, #19b38f 100%);
+  background-size: 24px 24px, 24px 24px, 100% 100%;
+}
+.bm-figure { width: 100%; height: auto; display: block; }
+.body-outline { fill: #ffffff; stroke: #d7e3ea; stroke-width: 1.5; }
+
+.region { cursor: pointer; stroke-width: 2; transition: filter 0.15s; }
+.region:hover { filter: brightness(1.08); }
+.region.healthy  { fill: #c9f1dc; stroke: var(--healthy); }
+.region.warning  { fill: #f6dfb9; stroke: var(--warning); }
+.region.critical { fill: #fbd0d5; stroke: var(--critical); }
+.region.selected { stroke: var(--ink); stroke-width: 3.5; }
+.pupil { fill: var(--ink); stroke: none; }
+
+.halo { fill: none; stroke-width: 5; stroke-dasharray: 3 10; stroke-linecap: round; cursor: pointer; }
+.halo.healthy  { stroke: #ffffff; }
+.halo.warning  { stroke: #f6dfb9; }
+.halo.critical { stroke: var(--critical); }
+.halo.selected { stroke: var(--ink); stroke-width: 7; }
+
+/* Region buttons */
+.bm-region-list { display: flex; flex-direction: column; gap: 10px; min-width: 230px; }
+.bm-region-list button {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; min-height: 44px;
+  background: #fff; color: var(--ink);
+  border: 1.5px solid #b9c1cc; border-radius: 12px;
+  font-size: 15px; text-align: left; cursor: pointer;
+}
+.bm-region-list button:hover { border-color: var(--main-blue); }
+.bm-region-list button.active {
+  border: 2px solid var(--main-blue);
+  background: var(--panel-blue);
+  font-weight: 600;
+}
+.bm-region-list .name { flex: 1; }
+
+.bm-dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; flex: none; }
+.bm-dot.healthy  { background: var(--healthy); }
+.bm-dot.warning  { background: var(--warning); }
+.bm-dot.critical { background: var(--critical); }
+
+/* Info panel styled like the Physical Health Stats card */
+.bm-panel {
+  flex: 1 1 380px;
+  border: 1px solid #9fbbe8;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.bm-panel-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  background: var(--header-blue);
+  padding: 10px 16px;
+}
+.bm-panel-head h2 { margin: 0; font-size: 18px; }
+
+.bm-pill {
+  padding: 3px 12px; border-radius: 999px;
+  font-size: 13px; font-weight: 700; white-space: nowrap; color: #fff;
+}
+.bm-pill.healthy  { background: var(--healthy); }
+.bm-pill.warning  { background: var(--warning); }
+.bm-pill.critical { background: var(--critical); }
+
+.bm-panel-body { background: var(--panel-blue); margin: 12px; border-radius: 6px; padding: 16px; }
+.bm-panel-body h3 {
+  font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--main-blue); margin: 16px 0 4px;
+}
+.bm-panel-body p { margin: 0; font-size: 15px; }
+
+/* Readings in the dark blue "Stats for Today" style */
+.bm-readings {
+  background: var(--main-blue); color: #fff;
+  border-radius: 6px; padding: 12px 16px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.bm-reading { display: flex; justify-content: space-between; font-size: 15px; }
+
+.bm-todo { background: #fff; border-radius: 6px; padding: 2px 14px 10px; margin-top: 16px; }
+.bm-todo ul { margin: 4px 0 0; padding-left: 18px; }
+
+/* Purple buttons, like "See Trends" and "Back" */
+.bm-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.bm-btn {
+  background: var(--purple); color: #fff;
+  border: none; border-radius: 6px;
+  padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.bm-btn:hover { filter: brightness(1.12); }
+
+/* Legend */
+.bm-legend { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 18px; font-size: 14px; }
+.bm-legend span { display: inline-flex; align-items: center; gap: 6px; }
