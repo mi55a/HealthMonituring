@@ -1,12 +1,11 @@
-
 import { useEffect, useRef, useState } from "react";
-import { Settings as SettingsIcon, Home } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Settings as SettingsIcon } from "lucide-react";
+import ProfileDropdown from "./ProfileDropdown";
+import "./WelcomePage.css";
 import "./Settings.css";
 
 const STORAGE_KEY = "healthMonitoring.user";
 
-// Placeholder user until authentication is implemented.
 const DUMMY_USER = {
   firstName: "Alex",
   lastName: "Rivera",
@@ -46,12 +45,9 @@ function loadUser() {
 }
 
 export default function Settings() {
-  const navigate = useNavigate();
-
   const [savedUser, setSavedUser] = useState(loadUser);
   const [user, setUser] = useState(savedUser);
   const [status, setStatus] = useState("");
-
   const timer = useRef(null);
 
   useEffect(() => {
@@ -67,7 +63,6 @@ export default function Settings() {
   const isDirty =
     JSON.stringify(user) !== JSON.stringify(savedUser);
 
-  // Update the form without saving immediately.
   function update(changes) {
     const next = { ...user, ...changes };
 
@@ -85,7 +80,6 @@ export default function Settings() {
     setStatus("");
   }
 
-  // Save changes to local storage.
   function handleSave(e) {
     e.preventDefault();
 
@@ -117,40 +111,24 @@ export default function Settings() {
 
   return (
     <div className="settings-page">
-
-      {/* Header */}
       <header className="settings-header">
+        <div className="settings-profile">
+          <ProfileDropdown />
+        </div>
 
-        {/* Home Button */}
-        <button
-          type="button"
-          className="settings-home"
-          onClick={() => navigate("/")}
-        >
-          <Home size={18} />
-          <span>Home</span>
-        </button>
-
-        {/* Centered Settings Title */}
         <div className="settings-header-title">
           <div className="settings-icon-box">
             <SettingsIcon size={36} strokeWidth={2} />
           </div>
-
           <h1>Settings</h1>
         </div>
-
       </header>
 
-      {/* Main Content */}
       <main className="settings-main">
-
-        {/* Centered User Information Card */}
         <section
           className="settings-card"
           aria-labelledby="user-info-title"
         >
-
           <div className="settings-card-header">
             <h2 id="user-info-title">
               Edit User Information
@@ -162,8 +140,6 @@ export default function Settings() {
             autoComplete="off"
             onSubmit={handleSave}
           >
-
-            {/* First Name */}
             <div className="settings-field">
               <label htmlFor="first-name">
                 First Name
@@ -175,14 +151,11 @@ export default function Settings() {
                 maxLength={50}
                 value={user.firstName}
                 onChange={(e) =>
-                  update({
-                    firstName: e.target.value,
-                  })
+                  update({ firstName: e.target.value })
                 }
               />
             </div>
 
-            {/* Last Name */}
             <div className="settings-field">
               <label htmlFor="last-name">
                 Last Name
@@ -194,19 +167,13 @@ export default function Settings() {
                 maxLength={50}
                 value={user.lastName}
                 onChange={(e) =>
-                  update({
-                    lastName: e.target.value,
-                  })
+                  update({ lastName: e.target.value })
                 }
               />
             </div>
 
-            {/* Birth Date */}
             <div className="settings-field">
-              <span
-                className="settings-label"
-                id="dob-label"
-              >
+              <span className="settings-label" id="dob-label">
                 Birth Date
               </span>
 
@@ -215,8 +182,6 @@ export default function Settings() {
                 role="group"
                 aria-labelledby="dob-label"
               >
-
-                {/* Month */}
                 <select
                   aria-label="Birth month"
                   value={user.dobMonth}
@@ -227,16 +192,12 @@ export default function Settings() {
                   }
                 >
                   {MONTHS.map((month, i) => (
-                    <option
-                      key={month}
-                      value={i + 1}
-                    >
+                    <option key={month} value={i + 1}>
                       {month}
                     </option>
                   ))}
                 </select>
 
-                {/* Day */}
                 <select
                   aria-label="Birth day"
                   value={user.dobDay}
@@ -256,7 +217,6 @@ export default function Settings() {
                   ))}
                 </select>
 
-                {/* Year */}
                 <select
                   aria-label="Birth year"
                   value={user.dobYear}
@@ -267,19 +227,14 @@ export default function Settings() {
                   }
                 >
                   {YEARS.map((year) => (
-                    <option
-                      key={year}
-                      value={year}
-                    >
+                    <option key={year} value={year}>
                       {year}
                     </option>
                   ))}
                 </select>
-
               </div>
             </div>
 
-            {/* Save Changes */}
             <button
               type="submit"
               className="settings-save"
@@ -288,7 +243,6 @@ export default function Settings() {
               Save Changes
             </button>
 
-            {/* Save Confirmation */}
             <p
               className={`settings-status${
                 status &&
@@ -301,17 +255,14 @@ export default function Settings() {
             >
               {status}
             </p>
-
           </form>
         </section>
 
-        {/* Footer Note */}
         <p className="settings-note">
           Signed in as a placeholder user until authentication
           is added. Press Save to keep your changes.
           They are stored on this device only.
         </p>
-
       </main>
     </div>
   );

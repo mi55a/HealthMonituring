@@ -1,7 +1,7 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Home, Settings } from "lucide-react";
+import ProfileDropdown from "./ProfileDropdown";
+import "./WelcomePage.css";
 import "./AIAnalysis.css";
 
 const healthData = [
@@ -32,7 +32,6 @@ const healthData = [
 ];
 
 export default function AIAnalysis() {
-  const navigate = useNavigate();
   const [question, setQuestion] = useState("");
   const [selectedDays, setSelectedDays] = useState("7");
 
@@ -105,28 +104,14 @@ export default function AIAnalysis() {
   return (
     <div className="ai-page">
       <header className="main-header">
-        <button
-          type="button"
-          className="ai-nav-button"
-          onClick={() => navigate("/")}
-        >
-          <Home size={18} />
-          Home
-        </button>
+        <ProfileDropdown />
 
         <h1>
           <span>Astro</span>
           <span className="brand-blue">Health</span>
         </h1>
 
-        <button
-          type="button"
-          className="ai-nav-button settings-button"
-          onClick={() => navigate("/settings")}
-        >
-          <Settings size={18} />
-          Settings
-        </button>
+        <div className="ai-header-spacer" />
       </header>
 
       <main className="ai-container">
