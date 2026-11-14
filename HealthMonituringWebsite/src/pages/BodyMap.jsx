@@ -69,27 +69,87 @@ const REGIONS = {
 
 const STATUS_LABEL = { healthy: "Healthy", warning: "Warning", critical: "Critical" };
 
+const ICONS = {
+  gear: "M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7.4-2.5a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.3 2.5a7.4 7.4 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 1.7 1L11 21h4l.3-2.5a7.4 7.4 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6Z",
+  report: "M9 4h6v3H9zM7 5H5v16h14V5h-2M8 11h8M8 15h8",
+  chart: "M5 20V10M12 20V4M19 20v-7",
+  sparkle: "M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8ZM19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8Z",
+  body: "M12 5.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM7 8h10l-2 6v8M9 22v-8L7 8",
+  warning: "M12 3 2 21h20L12 3Zm0 7v5m0 3v.5",
+};
+
+function Icon({ name, size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={ICONS[name]} />
+    </svg>
+  );
+}
+
+const MENU = [
+  { label: "Today's Report", icon: "report" },
+  { label: "View Health Stats", icon: "chart" },
+  { label: "AI Assistant", icon: "sparkle" },
+  { label: "Body Map", icon: "body", current: true },
+];
+
 export default function BodyMap() {
   const [selected, setSelected] = useState("heart");
+  const [menuOpen, setMenuOpen] = useState(false);
   const region = REGIONS[selected];
+
+  const alertCount = Object.values(REGIONS).filter((r) => r.status !== "healthy").length;
 
   const cls = (key) =>
     `region ${REGIONS[key].status} ${selected === key ? "selected" : ""}`;
 
   return (
     <div className="bodymap-page">
-      {/* Top bar (replace with your team's shared header later) */}
-      <header className="bm-topbar">
-        <span className="bm-gear" aria-hidden="true">⚙</span>
-        <span className="bm-brand">AstroHealth</span>
-      </header>
-      <nav className="bm-nav">
-        <button type="button" className="bm-profile">MY PROFILE ▾</button>
-        <span className="bm-tab">Body Map</span>
-      </nav>
+      {/* Top row: profile menu and alerts, matching the home page */}
+      <div className="bm-toprow">
+        <div className="bm-profile-wrap">
+          <button
+            type="button"
+            className="bm-profile"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            <Icon name="gear" size={15} />
+            PROFILE
+            <span className={`bm-chevron ${menuOpen ? "open" : ""}`} aria-hidden="true">⌄</span>
+          </button>
+          {menuOpen && (
+            <div className="bm-menu">
+              {MENU.map((item) => (
+                <button
+                  type="button"
+                  key={item.label}
+                  className={`bm-menu-item ${item.current ? "current" : ""}`}
+                  aria-current={item.current ? "page" : undefined}
+                >
+                  <Icon name={item.icon} />
+                  {item.label}
+                </button>
+              ))}
+              <div className="bm-menu-divider" />
+              <button type="button" className="bm-menu-item">
+                <Icon name="gear" />
+                Settings
+              </button>
+            </div>
+          )}
+        </div>
+
+        <span className="bm-alerts">
+          <Icon name="warning" size={15} />
+          {alertCount === 0 ? "ALERTS: ALL CLEAR!" : `ALERTS: ${alertCount} TO WATCH`}
+        </span>
+      </div>
 
       <main className="bm-main">
-        <h1 className="bm-title">Body Status</h1>
+        <h1 className="bm-title">Body <span>Status</span></h1>
+        <p className="bm-subtitle">Select a body system to see how it's doing.</p>
 
         <div className="bm-layout">
           {/* Figure card */}
