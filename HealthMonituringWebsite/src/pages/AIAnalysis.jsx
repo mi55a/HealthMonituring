@@ -113,7 +113,6 @@ function AIAnalysis() {
 
         <h1>ASTROHEALTH</h1>
 
-        <div className="header-spacer"></div>
       </header>
 
       {settingsOpen && (
