@@ -1,0 +1,487 @@
+
+/* ========================================
+   AstroHealth Color Palette
+======================================== */
+
+:root {
+  --white: #ffffff;
+  --navy: #102344;
+  --blue: #2478c5;
+  --light-blue: #eaf5fb;
+  --purple: #7534d8;
+  --purple-hover: #6426c5;
+  --text-muted: #718096;
+  --border: #dbe4ed;
+}
+
+/* ========================================
+   Welcome Page
+======================================== */
+
+.welcome-page {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--white);
+  color: var(--navy);
+  font-family: "Chakra Petch", sans-serif;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: clip;
+}
+
+/* ========================================
+   Header
+======================================== */
+
+.welcome-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 35px 5%;
+  position: relative;
+  z-index: 10;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+/* ========================================
+   Profile Dropdown
+======================================== */
+
+.profile-dropdown {
+  position: relative;
+}
+
+.profile-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 20px;
+
+  background: var(--light-blue);
+  color: var(--navy);
+  border: none;
+  border-radius: 25px;
+
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.profile-button:hover {
+  background: #dceefa;
+}
+
+.arrow {
+  transition: transform 0.2s ease;
+}
+
+.arrow.rotated {
+  transform: rotate(180deg);
+}
+
+/* Profile Menu */
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  width: 250px;
+  padding: 8px;
+
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(16, 35, 68, 0.1);
+  z-index: 20;
+}
+
+.dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 12px;
+
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus-visible {
+  background: var(--light-blue);
+}
+
+.dropdown-item:last-child {
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 16px;
+}
+
+/* ========================================
+   Environmental Alerts
+======================================== */
+
+.alerts-container {
+  position: relative;
+}
+
+.welcome-alerts {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 18px;
+
+  border: none;
+  border-radius: 25px;
+
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+/* Safe - Green */
+
+.alert-safe {
+  background: #eaf7f0;
+  color: #25845d;
+}
+
+.alert-safe:hover {
+  background: #daf0e4;
+}
+
+/* Caution - Yellow */
+
+.alert-caution {
+  background: #fff4df;
+  color: #b7791f;
+}
+
+.alert-caution:hover {
+  background: #ffebc4;
+}
+
+/* Danger - Red */
+
+.alert-danger {
+  background: #fff0ef;
+  color: #d94740;
+}
+
+.alert-danger:hover {
+  background: #ffe1df;
+}
+
+/* Alerts Dropdown */
+
+.alerts-message {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 270px;
+  padding: 18px;
+
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(16, 35, 68, 0.1);
+  z-index: 20;
+}
+
+.alerts-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.alerts-description {
+  margin: 14px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.alerts-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-safe {
+  color: #25845d;
+}
+
+.status-caution {
+  color: #b7791f;
+}
+
+.status-danger {
+  color: #d94740;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ========================================
+   Main Welcome Content
+======================================== */
+
+.welcome-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 30px 20px 100px;
+}
+
+/* ========================================
+   Cosmic AstroHealth Logo
+======================================== */
+
+.cosmic-logo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: min(600px, 100%);
+  min-height: 180px;
+  isolation: isolate;
+}
+
+/* Subtle Blue Glow */
+
+.cosmic-logo::before {
+  content: "";
+  position: absolute;
+  width: 90%;
+  height: 140%;
+
+  background: radial-gradient(
+    ellipse,
+    rgba(199, 228, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0) 70%
+  );
+
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Logo Text */
+
+.brand-title {
+  position: relative;
+  z-index: 2;
+
+  margin: 0;
+  font-size: clamp(45px, 6vw, 85px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -2px;
+  white-space: nowrap;
+}
+
+.brand-astro {
+  color: var(--navy);
+}
+
+.brand-health {
+  color: var(--blue);
+}
+
+/* Cosmic Orbit */
+
+.cosmic-orbit {
+  position: absolute;
+  width: 100%;
+  height: auto;
+  top: 50%;
+  left: 50%;
+
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Golden Stars */
+
+.cosmic-star {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+
+  z-index: 3;
+  pointer-events: none;
+}
+
+.star-one {
+  top: 13%;
+  right: 7%;
+  width: 23px;
+  height: 23px;
+}
+
+.star-two {
+  bottom: 15%;
+  left: 5%;
+  width: 19px;
+  height: 19px;
+}
+
+.star-three {
+  top: 24%;
+  left: 18%;
+  width: 11px;
+  height: 11px;
+  opacity: 0.75;
+}
+
+/* ========================================
+   Welcome Message
+======================================== */
+
+.welcome-subtitle {
+  margin: 25px 0 0;
+  color: var(--text-muted);
+  font-size: clamp(20px, 2.5vw, 34px);
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+/* ========================================
+   Get Started Button
+======================================== */
+
+.get-started-btn {
+  margin-top: 55px;
+  padding: 16px 50px;
+  min-width: 245px;
+
+  background: var(--purple);
+  color: var(--white);
+  border: none;
+  border-radius: 14px;
+
+  font-size: 21px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.get-started-btn:hover {
+  background: var(--purple-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(117, 52, 216, 0.18);
+}
+
+/* ========================================
+   Mobile Responsive
+======================================== */
+
+@media (max-width: 600px) {
+  .welcome-header {
+    padding: 20px 15px;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .profile-button {
+    padding: 11px 14px;
+    gap: 10px;
+    font-size: 11px;
+  }
+
+  .welcome-alerts {
+    padding: 11px 13px;
+    font-size: 11px;
+  }
+
+  .dropdown-menu {
+    width: min(250px, calc(100vw - 30px));
+  }
+
+  .alerts-message {
+    width: min(270px, calc(100vw - 30px));
+  }
+
+  .welcome-content {
+    padding: 50px 15px 100px;
+  }
+
+  .cosmic-logo {
+    width: 100%;
+    min-height: 125px;
+  }
+
+  .brand-title {
+    font-size: clamp(34px, 9vw, 52px);
+    letter-spacing: -1px;
+  }
+
+  .cosmic-star {
+    width: 14px;
+    height: 14px;
+  }
+
+  .star-one {
+    right: 4%;
+  }
+
+  .star-two {
+    left: 4%;
+  }
+
+  .welcome-subtitle {
+    font-size: 19px;
+  }
+
+  .get-started-btn {
+    margin-top: 40px;
+    padding: 15px 35px;
+    min-width: 200px;
+    font-size: 17px;
+  }
+}
