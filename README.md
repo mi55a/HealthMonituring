@@ -329,6 +329,43 @@ AstroHealth is a hackathon prototype designed to demonstrate the potential of di
 - The application currently supports a single demo astronaut.
 - Medical officer communication and report sharing are demonstration features.
 - The application is not a certified medical device.
+  
+---
 
+## 🤖 AI Usage & Responsible AI Practices
 
+Our team used artificial intelligence as a supporting tool during the development of AstroHealth. We believe AI should enhance human creativity, problem-solving, and decision-making rather than replace them.
+
+### How We Used AI
+
+Throughout the development process, AI tools assisted us with:
+
+- **Development Support:** Helping troubleshoot errors, debug code, and explore possible implementations.
+- **Code Assistance:** Suggesting improvements to React components, backend APIs, and database integration.
+- **Research Assistance:** Helping us understand technical concepts related to astronaut health monitoring and space exploration.
+- **AI Health Assistant:** Integrating Google's Gemini API to provide users with explanations and insights based on their recorded health measurements.
+
+### Responsible AI Practices
+
+We aimed to use AI responsibly by following these principles:
+
+1. **Human Oversight:** Our team remained responsible for development decisions, reviewing AI-generated suggestions before incorporating them into the project using individual branches & PR's.
+
+2. **Transparency:** We acknowledge the use of AI tools during development and clearly identify AI-powered functionality within AstroHealth.
+
+3. **Data Privacy:** Gemini API credentials are stored in backend environment variables rather than exposed in frontend code. The application currently uses fictional demonstration health data.
+
+4. **Health and Safety:** Our AI Assistant is intended to provide informational insights, not medical diagnoses or treatment recommendations. It does not replace qualified healthcare professionals.
+
+5. **Data Accuracy:** The AI Assistant uses saved Dashboard measurements as context and is instructed to recognize missing information rather than invent health readings.
+
+6. **Human-Centered Design:** AI-generated insights are intended to help users understand their health data while leaving important medical decisions to qualified professionals.
+
+### AI Limitations
+
+We recognize that AI-generated responses may contain inaccuracies or incomplete interpretations. AstroHealth is a hackathon prototype and has not been clinically validated.
+
+Our goal is to demonstrate how AI could support astronaut health monitoring while emphasizing transparency, safety, and responsible technology development.
+
+**AI was used as an assistive tool, while our team retained responsibility for the project's design, implementation, testing, and final decisions.**
 
