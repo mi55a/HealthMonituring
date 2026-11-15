@@ -116,6 +116,29 @@ app.get("/api/space-weather", async (req, res) => {
 // ---------- Start the server ----------
 
 const PORT = 3001;
+
+app.get("/api/nasa/sleep/subjects", (req, res) => {
+  const subjects = db.prepare(`
+    SELECT subject_id, COUNT(*) AS total_records
+    FROM nasa_sleep_records
+    GROUP BY subject_id
+    ORDER BY subject_id
+  `).all();
+
+  res.json(subjects);
+});
+
+app.get("/api/nasa/sleep/:subjectId", (req, res) => {
+  const records = db.prepare(`
+    SELECT *
+    FROM nasa_sleep_records
+    WHERE subject_id = ?
+    ORDER BY measurement_date ASC, id ASC
+  `).all(req.params.subjectId);
+
+  res.json(records);
+});
+
 app.listen(PORT, () => {
   console.log(`AstroHealth server running at http://localhost:${PORT}`);
 });

@@ -23,6 +23,18 @@ db.exec(`
     notes TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+  
+  CREATE TABLE IF NOT EXISTS nasa_sleep_records (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  subject_id TEXT NOT NULL,
+  test_phase TEXT,
+  bed_rest_day INTEGER,
+  measurement_date TEXT,
+  sleep_latency_minutes REAL,
+  sleep_duration_minutes REAL,
+  sleep_efficiency_percent REAL,
+  notes TEXT
+);
 `);
 
 export default db;
