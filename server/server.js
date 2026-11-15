@@ -496,6 +496,68 @@ app.post("/api/dashboard", (req, res) => {
   }
 });
 
+//
+// ---------- Dashboard History ----------
+//
+
+// Historical Dashboard snapshots for Physical
+// and Mental Health Stats and trend graphs.
+
+app.get("/api/dashboard/history", (req, res) => {
+  try {
+    const rows = db
+      .prepare(`
+        SELECT
+          id,
+          heart_rate,
+          blood_pressure,
+          sleep_hours,
+          stress_level,
+          extra_json,
+          created_at
+        FROM dashboard_snapshots
+        WHERE astronaut_id = 1
+        ORDER BY id ASC
+        LIMIT 500
+      `)
+      .all();
+
+    const history = rows.map((row) => {
+      let extras = {};
+
+      try {
+        extras = JSON.parse(
+          row.extra_json || "{}"
+        );
+      } catch {
+        // Older records may not have
+        // optional measurements.
+      }
+
+      return {
+        id: row.id,
+        recordedAt: row.created_at,
+        heartRate: row.heart_rate,
+        bloodPressure: row.blood_pressure,
+        sleepHours: row.sleep_hours,
+        stressLevel: row.stress_level,
+        ...extras,
+      };
+    });
+
+    res.json(history);
+  } catch (error) {
+    console.error(
+      "Dashboard history error:",
+      error
+    );
+
+    res.status(500).json({
+      error: "Unable to retrieve history.",
+    });
+  }
+});
+
 // ---------- NASA space weather ----------
 
 async function getDonki(type, startDate, endDate) {

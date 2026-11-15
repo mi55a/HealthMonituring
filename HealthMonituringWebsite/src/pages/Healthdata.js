@@ -1,137 +1,173 @@
-// Sample numbers for the screens. Later these can come from the backend
-// (for example /api/readings). low and high are the normal range.
-// The last item in history is the current reading.
+import { useEffect, useState } from "react";
 
-export const PHYSICAL_METRICS = [
+const API = "http://localhost:3001";
+
+const physical = [
   {
-    key: 'bloodSugar',
-    name: 'Blood sugar',
-    unit: ' mg/dL',
+    key: "bloodSugar",
+    name: "Blood sugar",
+    unit: " mg/dL",
     low: 70,
     high: 100,
-    history: [
-      { label: 'Nov 11', value: 88 },
-      { label: 'Nov 12', value: 92 },
-      { label: 'Nov 13', value: 85 },
-      { label: 'Nov 14', value: 90 },
-    ],
   },
   {
-    key: 'oxygen',
-    name: 'Oxygen level',
-    unit: '%',
+    key: "oxygenLevel",
+    name: "Oxygen level",
+    unit: "%",
     low: 95,
     high: 100,
-    history: [
-      { label: 'Nov 11', value: 97 },
-      { label: 'Nov 12', value: 96 },
-      { label: 'Nov 13', value: 94 },
-      { label: 'Nov 14', value: 95 },
-    ],
   },
   {
-    key: 'temperature',
-    name: 'Body temperature',
-    unit: '°F',
-    low: 97,
-    high: 99,
-    history: [
-      { label: 'Nov 11', value: 98.1 },
-      { label: 'Nov 12', value: 98.4 },
-      { label: 'Nov 13', value: 98.0 },
-      { label: 'Nov 14', value: 98.2 },
-    ],
+    key: "temperature",
+    name: "Body temperature",
+    unit: "°C",
+    low: 36.1,
+    high: 37.2,
   },
   {
-    key: 'heartRate',
-    name: 'Heart rate',
-    unit: ' bpm',
+    key: "heartRate",
+    name: "Heart rate",
+    unit: " bpm",
     low: 60,
     high: 100,
-    history: [
-      { label: 'Nov 11', value: 70 },
-      { label: 'Nov 12', value: 75 },
-      { label: 'Nov 13', value: 68 },
-      { label: 'Nov 14', value: 72 },
-    ],
   },
-]
+];
 
-export const MENTAL_METRICS = [
+const mental = [
   {
-    key: 'anxiety',
-    name: 'Anxiety Level',
-    unit: '/10',
+    key: "anxiety",
+    name: "Anxiety Level",
+    unit: "/10",
     low: 0,
     high: 5,
-    history: [
-      { label: 'Mar 25', value: 2 },
-      { label: 'Jun 25', value: 3 },
-      { label: 'Sep 25', value: 2 },
-      { label: 'Dec 25', value: 4 },
-      { label: 'Mar 26', value: 3 },
-      { label: 'May 26', value: 5 },
-      { label: 'Aug 26', value: 4 },
-      { label: 'Nov 26', value: 6.5 },
-    ],
   },
   {
-    key: 'fatigue',
-    name: 'Fatigue Level',
-    unit: '/10',
+    key: "fatigue",
+    name: "Fatigue Level",
+    unit: "/10",
     low: 0,
     high: 5,
-    history: [
-      { label: 'Mar 25', value: 3 },
-      { label: 'Jun 25', value: 2 },
-      { label: 'Sep 25', value: 4 },
-      { label: 'Dec 25', value: 3 },
-      { label: 'Mar 26', value: 2 },
-      { label: 'May 26', value: 3 },
-      { label: 'Aug 26', value: 2 },
-      { label: 'Nov 26', value: 2 },
-    ],
   },
   {
-    key: 'mood',
-    name: 'Mood',
-    unit: '/5',
+    key: "mood",
+    name: "Mood",
+    unit: "/5",
     low: 3,
     high: 5,
-    history: [
-      { label: 'Mar 25', value: 3 },
-      { label: 'Jun 25', value: 4 },
-      { label: 'Sep 25', value: 3 },
-      { label: 'Dec 25', value: 4 },
-      { label: 'Mar 26', value: 4 },
-      { label: 'May 26', value: 2 },
-      { label: 'Aug 26', value: 4 },
-      { label: 'Nov 26', value: 4 },
-    ],
   },
   {
-    key: 'stress',
-    name: 'Stress',
-    unit: '/10',
+    key: "stressLevel",
+    name: "Stress",
+    unit: "/10",
     low: 0,
     high: 5,
-    history: [
-      { label: 'Mar 25', value: 5 },
-      { label: 'Jun 25', value: 4 },
-      { label: 'Sep 25', value: 6 },
-      { label: 'Dec 25', value: 4 },
-      { label: 'Mar 26', value: 3 },
-      { label: 'May 26', value: 5 },
-      { label: 'Aug 26', value: 4 },
-      { label: 'Nov 26', value: 4 },
-    ],
   },
-]
+];
+
+export const PHYSICAL_METRICS = physical;
+export const MENTAL_METRICS = mental;
 
 export function getCurrent(metric) {
-  return metric.history[metric.history.length - 1].value
+  return metric.history?.length
+    ? metric.history.at(-1).value
+    : null;
 }
 
 export function isNormal(metric, value) {
-  return value >= metric.low && value <= metric.high
+  return (
+    value != null &&
+    value >= metric.low &&
+    value <= metric.high
+  );
+}
+
+function metricsFromRows(definitions, rows) {
+  return definitions.map((metric) => ({
+    ...metric,
+    history: rows.flatMap((row) => {
+      const raw = row[metric.key];
+
+      if (
+        raw === null ||
+        raw === undefined ||
+        raw === "" ||
+        !Number.isFinite(Number(raw))
+      ) {
+        return [];
+      }
+
+      return [
+        {
+          id: row.id,
+          label: new Date(
+            row.recordedAt.replace(" ", "T") + "Z"
+          ).toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+          }),
+          recordedAt: row.recordedAt,
+          value: Number(raw),
+        },
+      ];
+    }),
+  }));
+}
+
+export function useHealthMetrics(kind) {
+  const [state, setState] = useState({
+    metrics: [],
+    loading: true,
+    error: "",
+  });
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function load() {
+      try {
+        const response = await fetch(
+          `${API}/api/dashboard/history`,
+          {
+            signal: controller.signal,
+            cache: "no-store",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            "Could not load saved health history."
+          );
+        }
+
+        const rows = await response.json();
+
+        if (!Array.isArray(rows)) {
+          throw new Error("Invalid history response.");
+        }
+
+        setState({
+          metrics: metricsFromRows(
+            kind === "mental" ? mental : physical,
+            rows
+          ),
+          loading: false,
+          error: "",
+        });
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setState({
+            metrics: [],
+            loading: false,
+            error: error.message,
+          });
+        }
+      }
+    }
+
+    load();
+
+    return () => controller.abort();
+  }, [kind]);
+
+  return state;
 }

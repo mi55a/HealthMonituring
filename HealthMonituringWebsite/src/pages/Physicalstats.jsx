@@ -1,14 +1,18 @@
-import StatsScreen from './Statsscreen'
-import { PHYSICAL_METRICS } from './Healthdata'
+import StatsScreen from "./Statsscreen";
+import { useHealthMetrics } from "./Healthdata";
 
-export default function PhysicalStats({ onSeeTrends, onBack, onSwitch }) {
+export default function PhysicalStats({ onSeeTrends }) {
+  const { metrics, loading, error } =
+    useHealthMetrics("physical");
+
   return (
     <StatsScreen
       title="Physical Health Stats (Today)"
-      metrics={PHYSICAL_METRICS}
+      metrics={metrics}
+      loading={loading}
+      error={error}
       active="physical"
-      onSwitch={onSwitch}
       onSeeTrends={onSeeTrends}
     />
-  )
+  );
 }

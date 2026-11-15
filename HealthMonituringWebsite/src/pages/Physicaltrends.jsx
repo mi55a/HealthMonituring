@@ -1,8 +1,25 @@
-import TrendScreen from './Trendscreen'
-import { PHYSICAL_METRICS } from './Healthdata'
+import TrendScreen from "./Trendscreen";
+import { useHealthMetrics } from "./Healthdata";
 
-export default function PhysicalTrend({ metricKey, onBack }) {
-  const metric = PHYSICAL_METRICS.find((m) => m.key === metricKey)
-  const title = metric ? metric.name + ' (past 3 days):' : 'Trend not found'
-  return <TrendScreen title={title} metric={metric} onBack={onBack} />
+export default function PhysicalTrend({ metricKey }) {
+  const { metrics, loading, error } =
+    useHealthMetrics("physical");
+
+  const metric = metrics.find(
+    (m) => m.key === metricKey
+  );
+
+  return (
+    <TrendScreen
+      title={
+        metric
+          ? `${metric.name} (saved history)`
+          : "Health Trend"
+      }
+      metric={metric}
+      loading={loading}
+      error={error}
+      backPath="/physical-stats"
+    />
+  );
 }
