@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from "react";
 import ProfileDropdown from "./ProfileDropdown";
 import NASASleepData from "../NASASleepData.jsx";
@@ -103,6 +102,103 @@ const REGIONS = {
     readings: [
       ["Radiation dose", "radiationDose", "mSv"],
     ],
+  },
+};
+
+// ---------- Health status rules ----------
+// Each check returns "healthy", "warning" or "critical".
+// Example limits for the demo, adapted from common clinical ranges.
+// A flight surgeon would set each astronaut's real limits.
+
+const num = (v) => Number(v);
+
+const RULES = {
+  sleepHours: (v) => (num(v) < 5 ? "critical" : num(v) < 6 ? "warning" : "healthy"),
+  mood: (v) => (num(v) <= 1 ? "critical" : num(v) <= 2 ? "warning" : "healthy"),
+  stressLevel: (v) => (num(v) >= 9 ? "critical" : num(v) >= 7 ? "warning" : "healthy"),
+  visionCheck: (v) => {
+    const text = String(v).trim().toLowerCase();
+    const ok = ["normal", "no change", "ok", "good", "clear", "pass", "passed", "none"];
+    return ok.includes(text) ? "healthy" : "warning";
+  },
+  nausea: (v) => (num(v) >= 7 ? "critical" : num(v) >= 4 ? "warning" : "healthy"),
+  dizziness: (v) => (num(v) >= 7 ? "critical" : num(v) >= 4 ? "warning" : "healthy"),
+  oxygenLevel: (v) => (num(v) < 92 ? "critical" : num(v) < 95 ? "warning" : "healthy"),
+  heartRate: (v) =>
+    num(v) < 40 || num(v) > 120 ? "critical" : num(v) < 50 || num(v) > 100 ? "warning" : "healthy",
+  temperature: (v) =>
+    num(v) >= 38.1 || num(v) < 35.5 ? "critical" : num(v) > 37.5 || num(v) < 36.1 ? "warning" : "healthy",
+  bloodSugar: (v) =>
+    num(v) < 54 || num(v) >= 126 ? "critical" : num(v) < 70 || num(v) >= 100 ? "warning" : "healthy",
+  waterIntake: (v) => (num(v) < 1.5 ? "critical" : num(v) < 2 ? "warning" : "healthy"),
+  exercise: (v) => (num(v) < 30 ? "critical" : num(v) < 120 ? "warning" : "healthy"),
+  radiationDose: (v) => (num(v) >= 10 ? "critical" : num(v) > 0.75 ? "warning" : "healthy"),
+};
+
+// Blood pressure uses two fields: bloodPressure (systolic) and diastolic
+function bloodPressureStatus(systolic, diastolic) {
+  const sys = num(systolic);
+  const dia = diastolic === null || diastolic === undefined || diastolic === "" ? null : num(diastolic);
+  if (sys >= 140 || (dia !== null && dia >= 90) || sys < 85) return "critical";
+  if (sys >= 130 || (dia !== null && dia >= 80) || sys < 90) return "warning";
+  return "healthy";
+}
+
+const STATUS_LABEL = {
+  healthy: "Healthy",
+  warning: "Warning",
+  critical: "Critical",
+  unknown: "No data",
+};
+
+const RANK = { healthy: 0, warning: 1, critical: 2 };
+
+// What to do, per region and status
+const ACTIONS = {
+  brain: {
+    healthy: ["Keep a consistent sleep schedule.", "Protect your leisure time and calls home."],
+    warning: ["Use bright light in the morning and dim light before bed.", "Schedule a private call with family or a friend."],
+    critical: ["Book a private behavioral health conference.", "Ask the crew to move tasks that need full alertness."],
+  },
+  eyes: {
+    healthy: ["Do your weekly vision self-check."],
+    warning: ["Repeat the vision check with the eye chart and Amsler grid.", "Note any headache or vision change."],
+    critical: ["Contact the flight surgeon; an eye ultrasound may be needed."],
+  },
+  ear: {
+    healthy: ["No action needed."],
+    warning: ["Move your head slowly and keep a fixed visual reference.", "Ask about motion sickness medication in the onboard kit."],
+    critical: ["Stop tasks that need fine balance.", "Contact the flight surgeon."],
+  },
+  lungs: {
+    healthy: ["No action needed."],
+    warning: ["Measure again on another finger.", "Check the cabin CO₂ reading on the life-support display."],
+    critical: ["Check the cabin atmosphere now and alert the crew.", "Contact the flight surgeon."],
+  },
+  heart: {
+    healthy: ["Keep your cardio exercise schedule."],
+    warning: ["Rest 15 minutes, drink water, and measure again.", "Avoid caffeine until it settles."],
+    critical: ["Stop exercising and measure again in 5 minutes.", "Contact the flight surgeon if it stays out of range."],
+  },
+  gut: {
+    healthy: ["Keep to the mission menu and sleep schedule."],
+    warning: ["Rest and drink extra fluids.", "Measure your temperature again in 4 hours."],
+    critical: ["Rest and limit close contact with crewmates.", "Contact the flight surgeon."],
+  },
+  kidneys: {
+    healthy: ["Keep drinking about 2 to 2.5 litres a day."],
+    warning: ["Drink an extra 500 mL today."],
+    critical: ["Drink water now and contact the flight surgeon if you have side pain."],
+  },
+  bones: {
+    healthy: ["Target met. Keep up resistance exercise."],
+    warning: ["Fit in more exercise today, resistance first."],
+    critical: ["Tell the ground team so your schedule can be adjusted."],
+  },
+  rad: {
+    healthy: ["Dose is at the expected level."],
+    warning: ["Check space weather alerts.", "Sleep in the best-shielded area."],
+    critical: ["Possible solar storm: go to the storm shelter now."],
   },
 };
 
@@ -217,79 +313,55 @@ export default function BodyMap() {
     return `${value}${unit ? ` ${unit}` : ""}`;
   }
 
-  // Determine data availability for a body region.
+  // Health status of one reading: "healthy", "warning", "critical" or null (no data)
+  function getReadingStatus(field) {
+    if (!dashboardData || !hasValue(field)) return null;
+
+    if (field === "bloodPressure") {
+      return bloodPressureStatus(dashboardData.bloodPressure, dashboardData.diastolic);
+    }
+
+    const rule = RULES[field];
+    return rule ? rule(dashboardData[field]) : null;
+  }
+
+  // Region status = the worst status among its recorded readings
+  function getStatusClass(regionKey) {
+    if (loading || error || !dashboardData) return "unknown";
+
+    const statuses = REGIONS[regionKey].readings
+      .map(([, field]) => getReadingStatus(field))
+      .filter(Boolean);
+
+    if (statuses.length === 0) return "unknown";
+
+    return statuses.reduce((worst, s) => (RANK[s] > RANK[worst] ? s : worst), "healthy");
+  }
+
   function getRegionStatus(regionKey) {
     if (loading) return "Loading...";
     if (error) return "Unavailable";
-
-    const region = REGIONS[regionKey];
-
-    const fields = region.readings.map(
-      ([, field]) => field
-    );
-
-    const recorded = fields.filter((field) =>
-      hasValue(field)
-    ).length;
-
-    if (recorded === 0) {
-      return "No data";
-    }
-
-    if (recorded < fields.length) {
-      return "Partial data";
-    }
-
-    return "Data recorded";
+    return STATUS_LABEL[getStatusClass(regionKey)];
   }
 
-  // Get a CSS status class.
-  function getStatusClass(regionKey) {
-    const status = getRegionStatus(regionKey);
+  // Short explanation shown under "What to do now"
+  function getActions(regionKey) {
+    const status = getStatusClass(regionKey);
 
-    if (status === "Data recorded") {
-      return "safe";
+    if (loading) return ["Loading your saved health measurements..."];
+    if (error) return ["Health measurements are currently unavailable."];
+    if (status === "unknown") {
+      return ["No measurements recorded for this body system yet. Enter them in your Dashboard."];
     }
 
-    if (status === "Partial data") {
-      return "caution";
-    }
-
-    return "unknown";
+    return ACTIONS[regionKey]?.[status] ?? [];
   }
 
-  // Get measurement status description.
-  function getStatusDescription(regionKey) {
-    const status = getRegionStatus(regionKey);
-
-    if (status === "Data recorded") {
-      return (
-        "All measurements for this body system have " +
-        "been recorded successfully. This does not " +
-        "indicate a medical assessment."
-      );
-    }
-
-    if (status === "Partial data") {
-      return (
-        "Some measurements are available. Complete " +
-        "the remaining fields in your Dashboard."
-      );
-    }
-
-    if (status === "Loading...") {
-      return "Loading your saved health measurements...";
-    }
-
-    if (status === "Unavailable") {
-      return "Health measurements are currently unavailable.";
-    }
-
-    return (
-      "No measurements have been recorded for this " +
-      "body system yet. Enter them in your Dashboard."
-    );
-  }
+  // Number of regions that need attention (for the alert pill)
+  const alertCount = Object.keys(REGIONS).filter((key) => {
+    const s = getStatusClass(key);
+    return s === "warning" || s === "critical";
+  }).length;
 
   // Select a body region.
   function selectRegion(key) {
@@ -311,8 +383,12 @@ export default function BodyMap() {
       <div className="bm-toprow">
         <ProfileDropdown />
 
-        <span className="bm-alerts">
-          HEALTH DATA
+        <span className={`bm-alerts ${alertCount ? "has-alerts" : ""}`}>
+          {loading || error || !dashboardData
+            ? "HEALTH DATA"
+            : alertCount === 0
+            ? "ALERTS: ALL CLEAR"
+            : `ALERTS: ${alertCount} TO WATCH`}
         </span>
       </div>
 
@@ -548,6 +624,11 @@ export default function BodyMap() {
                           : error
                           ? "Unavailable"
                           : getReading(field, unit)}
+                        {getReadingStatus(field) && (
+                          <span className={`bm-tag ${getReadingStatus(field)}`}>
+                            {STATUS_LABEL[getReadingStatus(field)]}
+                          </span>
+                        )}
                       </strong>
                     </div>
                   )
@@ -561,11 +642,13 @@ export default function BodyMap() {
               <p>{region.space}</p>
 
               <div className="bm-todo">
-                <h3>Measurement Status</h3>
+                <h3>What to do now</h3>
 
-                <p>
-                  {getStatusDescription(selected)}
-                </p>
+                <ul>
+                  {getActions(selected).map((action) => (
+                    <li key={action}>{action}</li>
+                  ))}
+                </ul>
               </div>
 
               <div className="bm-buttons">
@@ -600,13 +683,18 @@ export default function BodyMap() {
         {/* Status legend */}
         <div className="bm-legend">
           <span>
-            <span className="bm-dot safe" />
-            Data recorded
+            <span className="bm-dot healthy" />
+            Healthy
           </span>
 
           <span>
-            <span className="bm-dot caution" />
-            Partial data
+            <span className="bm-dot warning" />
+            Warning
+          </span>
+
+          <span>
+            <span className="bm-dot critical" />
+            Critical
           </span>
 
           <span>

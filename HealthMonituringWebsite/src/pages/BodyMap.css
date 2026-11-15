@@ -559,3 +559,34 @@
   fill: #bfdbfe;
   stroke: #60a5fa;
 }
+
+/* ---------- Health status colours (Healthy / Warning / Critical) ---------- */
+.bodymap-page .region.healthy  { fill: #c9f1dc; stroke: #2fb36f; }
+.bodymap-page .region.warning  { fill: #f8e1bd; stroke: #d08a2e; }
+.bodymap-page .region.critical { fill: #fbd0d5; stroke: #e04848; }
+.bodymap-page .region.selected { stroke: #102344; stroke-width: 3.5; }
+
+.bodymap-page .halo.healthy  { stroke: #ffffff; }
+.bodymap-page .halo.warning  { stroke: #f8e1bd; }
+.bodymap-page .halo.critical { stroke: #e04848; }
+.bodymap-page .halo.selected { stroke: #102344; }
+
+.bodymap-page .bm-dot.healthy  { background: #2fb36f; }
+.bodymap-page .bm-dot.warning  { background: #d08a2e; }
+.bodymap-page .bm-dot.critical { background: #e04848; }
+
+.bodymap-page .bm-pill.healthy  { background: #dff5e9; color: #1d7a4b; }
+.bodymap-page .bm-pill.warning  { background: #fbefdc; color: #8f5a12; }
+.bodymap-page .bm-pill.critical { background: #fde8e8; color: #b8333a; }
+
+.bm-tag {
+  margin-left: 8px; padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.04em; vertical-align: middle;
+}
+.bm-tag.healthy  { background: #dff5e9; color: #1d7a4b; }
+.bm-tag.warning  { background: #fbefdc; color: #8f5a12; }
+.bm-tag.critical { background: #fde8e8; color: #b8333a; }
+
+.bodymap-page .bm-alerts.has-alerts { background: #fde8e8; color: #e04848; }
+.bodymap-page .bm-todo ul { margin: 6px 0 0; padding-left: 18px; }
