@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Settings as SettingsIcon } from "lucide-react";
 import ProfileDropdown from "./ProfileDropdown";
 import "./WelcomePage.css";
 import "./Settings.css";
 
+const API = "http://localhost:3001";
 const STORAGE_KEY = "healthMonitoring.user";
 
-const DUMMY_USER = {
-  firstName: "Alex",
-  lastName: "Rivera",
+const DEFAULT_USER = {
+  firstName: "",
+  lastName: "",
   dobMonth: 4,
   dobDay: 12,
   dobYear: 1985,
@@ -27,31 +28,81 @@ const YEARS = Array.from(
   (_, i) => THIS_YEAR - 18 - i
 );
 
-function loadUser() {
+function loadLocalUser() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
 
     if (raw) {
       return {
-        ...DUMMY_USER,
+        ...DEFAULT_USER,
         ...JSON.parse(raw),
       };
     }
   } catch {
-    // Fall back to placeholder user.
+    // Use default values.
   }
 
-  return DUMMY_USER;
+  return { ...DEFAULT_USER };
 }
 
 export default function Settings() {
-  const [savedUser, setSavedUser] = useState(loadUser);
-  const [user, setUser] = useState(savedUser);
+  const [savedUser, setSavedUser] = useState(loadLocalUser);
+  const [user, setUser] = useState(loadLocalUser);
   const [status, setStatus] = useState("");
-  const timer = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
+  // Load the current Dashboard name from SQLite.
   useEffect(() => {
-    return () => clearTimeout(timer.current);
+    const controller = new AbortController();
+
+    async function loadDashboardName() {
+      try {
+        const response = await fetch(
+          `${API}/api/dashboard`,
+          {
+            signal: controller.signal,
+            cache: "no-store",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Could not load Dashboard name.");
+        }
+
+        const dashboard = await response.json();
+
+        if (dashboard?.name) {
+          const parts = dashboard.name.trim().split(/\s+/);
+
+          const firstName = parts.shift() || "";
+          const lastName = parts.join(" ");
+
+          const updated = {
+            ...loadLocalUser(),
+            firstName,
+            lastName,
+          };
+
+          setUser(updated);
+          setSavedUser(updated);
+        }
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setStatus(
+            "Could not connect to Dashboard. Check that the backend is running."
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadDashboardName();
+
+    return () => controller.abort();
   }, []);
 
   const daysInMonth = new Date(
@@ -80,8 +131,8 @@ export default function Settings() {
     setStatus("");
   }
 
-  function handleSave(e) {
-    e.preventDefault();
+  async function handleSave(event) {
+    event.preventDefault();
 
     const cleaned = {
       ...user,
@@ -89,7 +140,44 @@ export default function Settings() {
       lastName: user.lastName.trim(),
     };
 
+    const fullName = [
+      cleaned.firstName,
+      cleaned.lastName,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    if (!fullName) {
+      setStatus("Please enter your name.");
+      return;
+    }
+
+    setSaving(true);
+    setStatus("");
+
     try {
+      const response = await fetch(
+        `${API}/api/dashboard/name`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: fullName,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.error || "Could not update name."
+        );
+      }
+
+      // Keep birth date and name in local storage.
       localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify(cleaned)
@@ -98,15 +186,11 @@ export default function Settings() {
       setSavedUser(cleaned);
       setUser(cleaned);
       setStatus("Changes saved successfully!");
-    } catch {
-      setStatus("Could not save on this device");
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setSaving(false);
     }
-
-    clearTimeout(timer.current);
-
-    timer.current = setTimeout(() => {
-      setStatus("");
-    }, 2500);
   }
 
   return (
@@ -120,6 +204,7 @@ export default function Settings() {
           <div className="settings-icon-box">
             <SettingsIcon size={36} strokeWidth={2} />
           </div>
+
           <h1>Settings</h1>
         </div>
       </header>
@@ -150,8 +235,11 @@ export default function Settings() {
                 type="text"
                 maxLength={50}
                 value={user.firstName}
+                disabled={loading || saving}
                 onChange={(e) =>
-                  update({ firstName: e.target.value })
+                  update({
+                    firstName: e.target.value,
+                  })
                 }
               />
             </div>
@@ -166,14 +254,20 @@ export default function Settings() {
                 type="text"
                 maxLength={50}
                 value={user.lastName}
+                disabled={loading || saving}
                 onChange={(e) =>
-                  update({ lastName: e.target.value })
+                  update({
+                    lastName: e.target.value,
+                  })
                 }
               />
             </div>
 
             <div className="settings-field">
-              <span className="settings-label" id="dob-label">
+              <span
+                className="settings-label"
+                id="dob-label"
+              >
                 Birth Date
               </span>
 
@@ -185,6 +279,7 @@ export default function Settings() {
                 <select
                   aria-label="Birth month"
                   value={user.dobMonth}
+                  disabled={loading || saving}
                   onChange={(e) =>
                     update({
                       dobMonth: Number(e.target.value),
@@ -192,7 +287,10 @@ export default function Settings() {
                   }
                 >
                   {MONTHS.map((month, i) => (
-                    <option key={month} value={i + 1}>
+                    <option
+                      key={month}
+                      value={i + 1}
+                    >
                       {month}
                     </option>
                   ))}
@@ -201,6 +299,7 @@ export default function Settings() {
                 <select
                   aria-label="Birth day"
                   value={user.dobDay}
+                  disabled={loading || saving}
                   onChange={(e) =>
                     update({
                       dobDay: Number(e.target.value),
@@ -211,7 +310,10 @@ export default function Settings() {
                     { length: daysInMonth },
                     (_, i) => i + 1
                   ).map((day) => (
-                    <option key={day} value={day}>
+                    <option
+                      key={day}
+                      value={day}
+                    >
                       {day}
                     </option>
                   ))}
@@ -220,6 +322,7 @@ export default function Settings() {
                 <select
                   aria-label="Birth year"
                   value={user.dobYear}
+                  disabled={loading || saving}
                   onChange={(e) =>
                     update({
                       dobYear: Number(e.target.value),
@@ -238,9 +341,9 @@ export default function Settings() {
             <button
               type="submit"
               className="settings-save"
-              disabled={!isDirty}
+              disabled={!isDirty || loading || saving}
             >
-              Save Changes
+              {saving ? "Saving..." : "Save Changes"}
             </button>
 
             <p
@@ -259,9 +362,8 @@ export default function Settings() {
         </section>
 
         <p className="settings-note">
-          Signed in as a placeholder user until authentication
-          is added. Press Save to keep your changes.
-          They are stored on this device only.
+          Your name is connected to your Dashboard.
+          Birth date is currently stored on this device.
         </p>
       </main>
     </div>

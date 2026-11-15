@@ -558,6 +558,56 @@ app.get("/api/dashboard/history", (req, res) => {
   }
 });
 
+
+//
+// ---------- Update User Name from Settings ----------
+//
+
+app.patch("/api/dashboard/name", (req, res) => {
+  try {
+    const name =
+      typeof req.body?.name === "string"
+        ? req.body.name.trim()
+        : "";
+
+    if (!name || name.length > 50) {
+      return res.status(400).json({
+        error: "Name must be between 1 and 50 characters.",
+      });
+    }
+
+    const latest = db.prepare(`
+      SELECT id
+      FROM dashboard_snapshots
+      WHERE astronaut_id = 1
+      ORDER BY id DESC
+      LIMIT 1
+    `).get();
+
+    if (!latest) {
+      return res.status(404).json({
+        error: "Please complete Dashboard setup first.",
+      });
+    }
+
+    // Update the latest snapshot without changing
+    // any of the saved health measurements.
+    db.prepare(`
+      UPDATE dashboard_snapshots
+      SET name = ?
+      WHERE id = ?
+    `).run(name, latest.id);
+
+    res.json({ name });
+  } catch (error) {
+    console.error("Settings name update error:", error);
+
+    res.status(500).json({
+      error: "Could not update user name.",
+    });
+  }
+});
+
 // ---------- NASA space weather ----------
 
 async function getDonki(type, startDate, endDate) {
@@ -687,59 +737,165 @@ app.get(
   }
 );
 
-// Chat uses the same saved measurements as the dashboard (single-user demo).
+
+ // Chat uses saved Dashboard measurements (single-user demo).
 app.post('/api/analysis/chat/:astronautId', async (req, res) => {
   const astronautId = Number(req.params.astronautId);
+
   if (astronautId !== 1) {
-    return res.status(400).json({ error: 'This demo supports astronaut 1 only.' });
+    return res.status(400).json({
+      error: 'This demo supports astronaut 1 only.'
+    });
   }
 
   const { question, history = [] } = req.body ?? {};
-  if (typeof question !== 'string' || !question.trim() || question.length > 1000) {
-    return res.status(400).json({ error: 'Enter a question of up to 1000 characters.' });
+
+  if (
+    typeof question !== 'string' ||
+    !question.trim() ||
+    question.length > 1000
+  ) {
+    return res.status(400).json({
+      error: 'Enter a question of up to 1000 characters.'
+    });
   }
-  if (!Array.isArray(history) || history.length > 6 || history.some((message) =>
-    !message || !['user', 'assistant'].includes(message.role) ||
-    typeof message.text !== 'string' || message.text.length > 1000
-  )) {
-    return res.status(400).json({ error: 'Invalid conversation history.' });
+
+  if (
+    !Array.isArray(history) ||
+    history.length > 6 ||
+    history.some((message) =>
+      !message ||
+      !['user', 'assistant'].includes(message.role) ||
+      typeof message.text !== 'string' ||
+      message.text.length > 1000
+    )
+  ) {
+    return res.status(400).json({
+      error: 'Invalid conversation history.'
+    });
   }
+
   if (!process.env.GEMINI_API_KEY?.trim()) {
-    return res.status(503).json({ error: 'The assistant is not configured. Set GEMINI_API_KEY on the server and restart it.' });
+    return res.status(503).json({
+      error: 'The assistant is not configured. Set GEMINI_API_KEY on the server and restart it.'
+    });
   }
 
   try {
+    // Fetch saved Dashboard measurements from SQLite.
     const rows = db.prepare(`
-      SELECT id, heart_rate, blood_pressure, sleep_hours, stress_level, created_at
+      SELECT
+        id,
+        name,
+        heart_rate,
+        blood_pressure,
+        sleep_hours,
+        stress_level,
+        extra_json,
+        created_at
       FROM dashboard_snapshots
-      WHERE astronaut_id = ? AND created_at >= datetime('now', '-7 days')
+      WHERE astronaut_id = ?
+        AND created_at >= datetime('now', '-7 days')
       ORDER BY created_at DESC, id DESC
       LIMIT 100
     `).all(astronautId);
-    const records = rows.reverse();
-    const answer = await askHealthAssistant(question.trim(), {
-      astronautId,
-      source: 'User-entered dashboard snapshots',
-      periodDays: 7,
-      records,
-      latestReading: records.at(-1) ?? null,
-      baseline: null,
-      units: { heart_rate: 'bpm', blood_pressure: 'mm Hg (single value)', sleep_hours: 'hours', stress_level: '0–10' },
-      dataLimitations: [
-        'No established personal baseline is available.',
-        'Snapshots represent form saves, not necessarily distinct daily measurements.',
-        'At most 100 snapshots from the past seven days are supplied.',
-        ...(records.length ? [] : ['No saved dashboard measurements exist for this period.']),
-      ],
-    }, history);
-    if (typeof answer !== 'string' || !answer.trim()) {
+
+    // Convert saved measurements into AI-readable records.
+    const records = rows.reverse().map((row) => {
+      let extras = {};
+
+      try {
+        extras = JSON.parse(row.extra_json || '{}');
+      } catch {
+        extras = {};
+      }
+
+      return {
+        id: row.id,
+        name: row.name,
+
+        // Required Dashboard measurements
+        heart_rate: row.heart_rate,
+        blood_pressure: row.blood_pressure,
+        sleep_hours: row.sleep_hours,
+        stress_level: row.stress_level,
+
+        // Optional Dashboard measurements
+        diastolic_pressure: extras.diastolic ?? null,
+        mood: extras.mood ?? null,
+        oxygen_level: extras.oxygenLevel ?? null,
+        temperature: extras.temperature ?? null,
+        blood_sugar: extras.bloodSugar ?? null,
+        water_intake: extras.waterIntake ?? null,
+        exercise_minutes: extras.exercise ?? null,
+        vision_check: extras.visionCheck ?? null,
+        nausea: extras.nausea ?? null,
+        dizziness: extras.dizziness ?? null,
+        radiation_dose: extras.radiationDose ?? null,
+
+        recorded_at: row.created_at
+      };
+    });
+
+    // Gemini receives the latest reading and saved history.
+    const answer = await askHealthAssistant(
+      question.trim(),
+      {
+        astronautId,
+        source: 'User-entered AstroHealth Dashboard data',
+        periodDays: 7,
+        records,
+        latestReading: records.at(-1) ?? null,
+        baseline: null,
+
+        units: {
+          heart_rate: 'bpm',
+          blood_pressure: 'mmHg (systolic)',
+          diastolic_pressure: 'mmHg',
+          sleep_hours: 'hours',
+          stress_level: '0–10',
+          mood: '1–5',
+          oxygen_level: '% SpO2',
+          temperature: '°C',
+          blood_sugar: 'mg/dL',
+          water_intake: 'liters',
+          exercise_minutes: 'minutes',
+          nausea: '0–10',
+          dizziness: '0–10',
+          radiation_dose: 'mSv'
+        },
+
+        dataLimitations: [
+          'Measurements are entered manually by the user.',
+          'No established personal baseline is available.',
+          'Missing optional measurements are null and must not be estimated.',
+          'Snapshots represent form saves, not necessarily distinct daily measurements.',
+          'At most 100 snapshots from the past seven days are supplied.',
+          ...(records.length
+            ? []
+            : ['No saved Dashboard measurements exist for this period.'])
+        ]
+      },
+      history
+    );
+
+    if (
+      typeof answer !== 'string' ||
+      !answer.trim()
+    ) {
       throw new Error('Empty assistant response');
     }
+
     res.json({ answer });
-  } catch {
-    // Keep provider errors and credentials out of browser responses and logs.
+
+  } catch (error) {
+    // Do not expose API keys or provider details.
     console.error('AI chat request failed.');
-    res.status(502).json({ error: 'The AI provider could not return an answer. Check the server API key and model configuration, then try again.' });
+
+    res.status(502).json({
+      error:
+        'The AI provider could not return an answer. Check the server API key and model configuration, then try again.'
+    });
   }
 });
 
