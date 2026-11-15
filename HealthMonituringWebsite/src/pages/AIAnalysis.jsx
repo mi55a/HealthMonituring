@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import ProfileDropdown from "./ProfileDropdown";
 import "./WelcomePage.css";
 import "./AIAnalysis.css";
@@ -45,48 +45,52 @@ export default function AIAnalysis() {
   const [shareMessage, setShareMessage] = useState("");
   const [doctorMessage, setDoctorMessage] = useState("");
 
-  function sendMessage(e) {
+  const [isSending, setIsSending] = useState(false);
+  const [chatError, setChatError] = useState("");
+  const sendingRef = useRef(false);
+
+  async function sendMessage(e) {
     e.preventDefault();
+    const text = question.trim();
+    if (!text || sendingRef.current) return;
 
-    if (!question.trim()) return;
-
-    const userQuestion = question.trim().toLowerCase();
-
-    setMessages((previous) => [
-      ...previous,
-      { sender: "user", text: question.trim() },
-    ]);
-
-    let answer =
-      "I need more information to understand what you're experiencing. Can you describe your symptoms and when they started?";
-
-    if (
-      userQuestion.includes("tired") ||
-      userQuestion.includes("sleep") ||
-      userQuestion.includes("fatigue")
-    ) {
-      answer =
-        "Your recent demo records show 5.2 hours of sleep compared with your 7.5-hour baseline. Stress is also elevated. Reduced sleep and increased stress may contribute to fatigue, but these records cannot establish the cause.";
-    } else if (
-      userQuestion.includes("heart") ||
-      userQuestion.includes("pulse")
-    ) {
-      answer =
-        "Your demo heart rate is 82 bpm compared with your 72 bpm baseline. Sleep is below baseline and stress is elevated. These changes may be related, but they do not establish a medical cause.";
-    } else if (
-      userQuestion.includes("stress") ||
-      userQuestion.includes("anxious")
-    ) {
-      answer =
-        "Your demo stress reading is 72/100 compared with a baseline of 40/100. Sleep is also below baseline. These patterns may be connected. Would you like to describe how you have been feeling?";
+    sendingRef.current = true;
+    setIsSending(true);
+    setChatError("");
+    const history = messages.slice(1).slice(-6).map((message) => ({
+      role: message.sender === "user" ? "user" : "assistant",
+      text: message.text.slice(0, 1000),
+    }));
+    // Commit the new conversation only when the server returns an answer.
+    // On failure the input and earlier conversation remain ready for retry.
+    try {
+      const response = await fetch("http://localhost:3001/api/analysis/chat/1", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: text, history }),
+        signal: AbortSignal.timeout(65000),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to get an answer.");
+      if (typeof result.answer !== "string" || !result.answer.trim()) {
+        throw new Error("The assistant returned an empty answer. Please try again.");
+      }
+      setMessages((previous) => [
+        ...previous,
+        { sender: "user", text },
+        { sender: "ai", text: result.answer },
+      ]);
+      setQuestion("");
+    } catch (error) {
+      setChatError(error.name === "TimeoutError"
+        ? "The assistant took too long. Please try again."
+        : error instanceof TypeError
+          ? "Could not connect to the backend. Check that the outer server is running on port 3001."
+          : error.message);
+    } finally {
+      sendingRef.current = false;
+      setIsSending(false);
     }
-
-    setMessages((previous) => [
-      ...previous,
-      { sender: "ai", text: answer },
-    ]);
-
-    setQuestion("");
   }
 
   function shareHealthData() {
@@ -183,10 +187,10 @@ export default function AIAnalysis() {
                 <h2>AI Medical Assistant</h2>
                 <p>Ask questions about your health and symptoms.</p>
               </div>
-              <span className="assistant-status">DEMO</span>
+              <span className="assistant-status">GEMINI · SAVED DASHBOARD DATA</span>
             </div>
 
-            <div className="chat-window">
+            <div className="chat-window" role="log" aria-live="polite" aria-label="Assistant conversation" aria-busy={isSending}>
               {messages.map((message, index) => (
                 <div
                   key={index}
@@ -202,14 +206,19 @@ export default function AIAnalysis() {
               ))}
             </div>
 
+            {isSending && <p role="status">Thinking… Reviewing saved dashboard data.</p>}
+            {chatError && <p role="alert">{chatError}</p>}
             <form className="chat-input" onSubmit={sendMessage}>
               <input
                 type="text"
                 placeholder="Ask about your health..."
+                aria-label="Question for the health assistant"
+                maxLength={1000}
+                disabled={isSending}
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
               />
-              <button type="submit">Send</button>
+              <button type="submit" disabled={isSending || !question.trim()}>{isSending ? "Thinking…" : "Send"}</button>
             </form>
 
             <p className="disclaimer">
