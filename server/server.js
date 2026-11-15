@@ -1,3 +1,5 @@
+import 'dotenv/config';
+import { askHealthAssistant } from './ai.js';
 import express from "express";
 import cors from "cors";
 import db from "./db.js";
@@ -622,6 +624,62 @@ app.get(
     res.json(records);
   }
 );
+
+// Chat uses the same saved measurements as the dashboard (single-user demo).
+app.post('/api/analysis/chat/:astronautId', async (req, res) => {
+  const astronautId = Number(req.params.astronautId);
+  if (astronautId !== 1) {
+    return res.status(400).json({ error: 'This demo supports astronaut 1 only.' });
+  }
+
+  const { question, history = [] } = req.body ?? {};
+  if (typeof question !== 'string' || !question.trim() || question.length > 1000) {
+    return res.status(400).json({ error: 'Enter a question of up to 1000 characters.' });
+  }
+  if (!Array.isArray(history) || history.length > 6 || history.some((message) =>
+    !message || !['user', 'assistant'].includes(message.role) ||
+    typeof message.text !== 'string' || message.text.length > 1000
+  )) {
+    return res.status(400).json({ error: 'Invalid conversation history.' });
+  }
+  if (!process.env.GEMINI_API_KEY?.trim()) {
+    return res.status(503).json({ error: 'The assistant is not configured. Set GEMINI_API_KEY on the server and restart it.' });
+  }
+
+  try {
+    const rows = db.prepare(`
+      SELECT id, heart_rate, blood_pressure, sleep_hours, stress_level, created_at
+      FROM dashboard_snapshots
+      WHERE astronaut_id = ? AND created_at >= datetime('now', '-7 days')
+      ORDER BY created_at DESC, id DESC
+      LIMIT 100
+    `).all(astronautId);
+    const records = rows.reverse();
+    const answer = await askHealthAssistant(question.trim(), {
+      astronautId,
+      source: 'User-entered dashboard snapshots',
+      periodDays: 7,
+      records,
+      latestReading: records.at(-1) ?? null,
+      baseline: null,
+      units: { heart_rate: 'bpm', blood_pressure: 'mm Hg (single value)', sleep_hours: 'hours', stress_level: '0–10' },
+      dataLimitations: [
+        'No established personal baseline is available.',
+        'Snapshots represent form saves, not necessarily distinct daily measurements.',
+        'At most 100 snapshots from the past seven days are supplied.',
+        ...(records.length ? [] : ['No saved dashboard measurements exist for this period.']),
+      ],
+    }, history);
+    if (typeof answer !== 'string' || !answer.trim()) {
+      throw new Error('Empty assistant response');
+    }
+    res.json({ answer });
+  } catch {
+    // Keep provider errors and credentials out of browser responses and logs.
+    console.error('AI chat request failed.');
+    res.status(502).json({ error: 'The AI provider could not return an answer. Check the server API key and model configuration, then try again.' });
+  }
+});
 
 // ---------- Start server ----------
 
