@@ -9,7 +9,6 @@ export default function PhysicalStats({ onSeeTrends, onBack, onSwitch }) {
       active="physical"
       onSwitch={onSwitch}
       onSeeTrends={onSeeTrends}
-      onBack={onBack}
     />
   )
 }
