@@ -1,67 +1,229 @@
+
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProfileDropdown from "./ProfileDropdown";
+
 import "./WelcomePage.css";
 import "./Dashboard.css";
 
-const storageKey = "healthmonitoring.dashboard.v1";
+const API = "http://localhost:3001";
 
 const initialData = {
   name: "",
   heartRate: "",
   bloodPressure: "",
+  diastolic: "",
   sleepHours: "",
   stressLevel: "",
+  mood: "",
+  oxygenLevel: "",
+  temperature: "",
+  bloodSugar: "",
+  waterIntake: "",
+  exercise: "",
+  visionCheck: "",
+  nausea: "",
+  dizziness: "",
+  radiationDose: "",
 };
 
-function readSavedData() {
-  try {
-    const raw = localStorage.getItem(storageKey);
-    if (!raw) return null;
-
-    const data = JSON.parse(raw);
-
-    const valid =
-      typeof data?.name === "string" &&
-      data.name.trim().length > 0 &&
-      data.heartRate !== "" &&
-      data.heartRate != null &&
-      Number.isFinite(Number(data.heartRate)) &&
-      Number(data.heartRate) > 0 &&
-      data.bloodPressure !== "" &&
-      data.bloodPressure != null &&
-      Number.isFinite(Number(data.bloodPressure)) &&
-      Number(data.bloodPressure) > 0 &&
-      data.sleepHours !== "" &&
-      data.sleepHours != null &&
-      Number.isFinite(Number(data.sleepHours)) &&
-      Number(data.sleepHours) >= 0 &&
-      Number(data.sleepHours) <= 24 &&
-      data.stressLevel !== "" &&
-      data.stressLevel != null &&
-      Number.isFinite(Number(data.stressLevel)) &&
-      Number(data.stressLevel) >= 0 &&
-      Number(data.stressLevel) <= 10;
-
-    return valid ? data : null;
-  } catch {
-    return null;
-  }
-}
+const sections = [
+  {
+    title: "Heart & Circulation",
+    fields: [
+      {
+        key: "heartRate",
+        label: "Heart Rate (bpm)",
+        min: 1,
+        max: 300,
+        required: true,
+      },
+      {
+        key: "bloodPressure",
+        label: "Systolic Blood Pressure (mmHg)",
+        min: 1,
+        max: 300,
+        required: true,
+      },
+      {
+        key: "diastolic",
+        label: "Diastolic Blood Pressure (mmHg)",
+        min: 1,
+        max: 300,
+      },
+    ],
+  },
+  {
+    title: "Brain & Mind",
+    fields: [
+      {
+        key: "sleepHours",
+        label: "Sleep (hours)",
+        min: 0,
+        max: 24,
+        required: true,
+      },
+      {
+        key: "stressLevel",
+        label: "Stress Level (0–10)",
+        min: 0,
+        max: 10,
+        required: true,
+      },
+      {
+        key: "mood",
+        label: "Mood (1–5)",
+        min: 1,
+        max: 5,
+      },
+    ],
+  },
+  {
+    title: "Lungs & Respiratory",
+    fields: [
+      {
+        key: "oxygenLevel",
+        label: "Blood Oxygen SpO₂ (%)",
+        min: 0,
+        max: 100,
+      },
+    ],
+  },
+  {
+    title: "Immune & Metabolism",
+    fields: [
+      {
+        key: "temperature",
+        label: "Body Temperature (°C)",
+        min: 20,
+        max: 45,
+      },
+      {
+        key: "bloodSugar",
+        label: "Blood Glucose (mg/dL)",
+        min: 1,
+        max: 1000,
+      },
+    ],
+  },
+  {
+    title: "Kidneys & Hydration",
+    fields: [
+      {
+        key: "waterIntake",
+        label: "Water Intake (liters)",
+        min: 0,
+        max: 30,
+      },
+    ],
+  },
+  {
+    title: "Bones & Muscles",
+    fields: [
+      {
+        key: "exercise",
+        label: "Exercise Duration (minutes)",
+        min: 0,
+        max: 1440,
+      },
+    ],
+  },
+  {
+    title: "Eyes & Balance",
+    fields: [
+      {
+        key: "visionCheck",
+        label: "Vision Check (notes)",
+        text: true,
+      },
+      {
+        key: "nausea",
+        label: "Nausea (0–10)",
+        min: 0,
+        max: 10,
+      },
+      {
+        key: "dizziness",
+        label: "Dizziness (0–10)",
+        min: 0,
+        max: 10,
+      },
+    ],
+  },
+  {
+    title: "Radiation Exposure",
+    fields: [
+      {
+        key: "radiationDose",
+        label: "Radiation Dose (mSv)",
+        min: 0,
+        max: 100000,
+      },
+    ],
+  },
+];
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [data, setData] = useState(readSavedData);
-  const [draft, setDraft] = useState(
-    () => readSavedData() ?? { ...initialData }
-  );
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const [draft, setDraft] = useState({ ...initialData });
   const [isEditing, setIsEditing] = useState(false);
+
   const dialogRef = useRef(null);
 
-  const needsSetup = !data || isEditing;
+  const needsSetup = !loading && (!data || isEditing);
 
+  // Load saved dashboard information
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadDashboard() {
+      try {
+        const response = await fetch(
+          `${API}/api/dashboard`,
+          { signal: controller.signal }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            "Could not load dashboard data."
+          );
+        }
+
+        const saved = await response.json();
+
+        setData(saved);
+        setDraft({
+          ...initialData,
+          ...(saved ?? {}),
+        });
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          setError(
+            "Cannot connect to the backend on port 3001. Start the server and refresh."
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadDashboard();
+
+    return () => controller.abort();
+  }, []);
+
+  // Open or close modal
   useEffect(() => {
     const dialog = dialogRef.current;
+
     if (!dialog) return;
 
     if (needsSetup && !dialog.open) {
@@ -73,7 +235,8 @@ export default function Dashboard() {
     }
   }, [needsSetup]);
 
-  function saveData(event) {
+  // Save health data
+  async function saveData(event) {
     event.preventDefault();
 
     const nextData = {
@@ -82,8 +245,13 @@ export default function Dashboard() {
     };
 
     if (!nextData.name) {
-      const nameInput = event.currentTarget.elements.name;
-      nameInput.setCustomValidity("Please enter your display name.");
+      const nameInput =
+        event.currentTarget.elements.name;
+
+      nameInput.setCustomValidity(
+        "Please enter your display name."
+      );
+
       event.currentTarget.reportValidity();
       return;
     }
@@ -106,41 +274,114 @@ export default function Dashboard() {
       return;
     }
 
-    setData(nextData);
-    setIsEditing(false);
+    setSaving(true);
+    setError("");
 
     try {
-      localStorage.setItem(storageKey, JSON.stringify(nextData));
-    } catch {
-      // Keep data in memory if local storage is unavailable.
+      const response = await fetch(
+        `${API}/api/dashboard`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(nextData),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          "Unable to save health data."
+        );
+      }
+
+      setData(result);
+      setDraft({
+        ...initialData,
+        ...result,
+      });
+
+      setIsEditing(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
     }
   }
 
   function handleEdit() {
-    setDraft(data ?? { ...initialData });
+    setError("");
+
+    setDraft({
+      ...initialData,
+      ...(data ?? {}),
+    });
+
     setIsEditing(true);
+  }
+
+  function handleCancel() {
+    setError("");
+
+    setDraft({
+      ...initialData,
+      ...(data ?? {}),
+    });
+
+    setIsEditing(false);
   }
 
   return (
     <div className="dashboard-page">
-      <nav className="dashboard-nav" aria-label="Main navigation">
+      <nav
+        className="dashboard-nav"
+        aria-label="Main navigation"
+      >
         <ProfileDropdown />
 
         <div className="title-dashboard">
           <span>Astro</span>
-          <span className="dashboard-brand-blue">Health</span>
+          <span className="dashboard-brand-blue">
+            Health
+          </span>
         </div>
 
         <div className="dashboard-nav-spacer" />
       </nav>
 
-      <main className="dashboard-main" hidden={!data}>
+      {error && !needsSetup && (
+        <p
+          role="alert"
+          style={{
+            color: "#b42318",
+            textAlign: "center",
+            padding: "12px",
+          }}
+        >
+          {error}
+        </p>
+      )}
+
+      {loading && (
+        <p style={{ textAlign: "center" }}>
+          Loading health data...
+        </p>
+      )}
+
+      <main
+        className="dashboard-main"
+        hidden={!data}
+      >
         <header className="dashboard-heading">
           <h1>
             {data
               ? `Welcome, ${data.name}`
               : "Welcome to your dashboard"}
           </h1>
+
           <p>Your daily health overview</p>
         </header>
 
@@ -163,24 +404,32 @@ export default function Dashboard() {
 
             <button
               type="button"
-              onClick={() => navigate("/health-stats")}
+              onClick={() =>
+                navigate("/health-stats")
+              }
             >
               Body Map
             </button>
 
             <button
               type="button"
-              onClick={() => navigate("/ai-analysis")}
+              onClick={() =>
+                navigate("/ai-analysis")
+              }
             >
               AI Assistant
             </button>
           </div>
         </section>
 
-        <section aria-label="Health metrics" className="metrics">
+        <section
+          aria-label="Health metrics"
+          className="metrics"
+        >
           <article className="dashboard-summary-card">
             <div className="dashboard-card-heading">
               <h2>Summary for Today</h2>
+
               <button
                 type="button"
                 className="dashboard-edit"
@@ -192,13 +441,35 @@ export default function Dashboard() {
 
             <div className="summary-grid">
               {[
-                ["Heart Rate", data?.heartRate, "bpm"],
-                ["Blood Pressure", data?.bloodPressure, "mm Hg"],
-                ["Sleep", data?.sleepHours, "hours"],
-                ["Stress Level", data?.stressLevel, "/10"],
+                [
+                  "Heart Rate",
+                  data?.heartRate,
+                  "bpm",
+                ],
+                [
+                  "Blood Pressure",
+                  data?.diastolic != null
+                    ? `${data.bloodPressure}/${data.diastolic}`
+                    : data?.bloodPressure,
+                  "mm Hg",
+                ],
+                [
+                  "Sleep",
+                  data?.sleepHours,
+                  "hours",
+                ],
+                [
+                  "Stress Level",
+                  data?.stressLevel,
+                  "/10",
+                ],
               ].map(([label, value, unit]) => (
-                <div className="summary-row" key={label}>
+                <div
+                  className="summary-row"
+                  key={label}
+                >
                   <span>{label}</span>
+
                   <strong>
                     {value ?? "—"}{" "}
                     {value != null ? unit : ""}
@@ -210,6 +481,7 @@ export default function Dashboard() {
         </section>
       </main>
 
+      {/* Dashboard health form modal */}
       <dialog
         ref={dialogRef}
         className="dashboard-dialog"
@@ -219,111 +491,315 @@ export default function Dashboard() {
           if (!data) {
             event.preventDefault();
           } else {
-            setDraft(data);
-            setIsEditing(false);
+            handleCancel();
           }
         }}
+        style={{
+          width: "min(520px, calc(100vw - 32px))",
+          maxWidth: "520px",
+          maxHeight: "min(90dvh, 850px)",
+          height: "auto",
+          margin: "auto",
+          padding: "0",
+          overflow: "hidden",
+          border: "none",
+          borderRadius: "18px",
+          boxSizing: "border-box",
+          background: "#ffffff",
+          boxShadow:
+            "0 20px 60px rgba(16, 35, 68, 0.2)",
+        }}
       >
-        <h2 id="setup-title">
-          {data ? "Edit Your Information" : "Set Up Your Dashboard"}
-        </h2>
-
-        <p id="setup-description" className="muted">
-          {data
-            ? "Update your health information below."
-            : "Please complete your health information before accessing your dashboard. All fields are required."}
-        </p>
-
-        <form onSubmit={saveData}>
-          <label>
-            Display Name
-            <input
-              name="name"
-              type="text"
-              required
-              autoFocus
-              maxLength={50}
-              placeholder="Enter your name"
-              value={draft.name}
-              onChange={(event) => {
-                event.target.setCustomValidity("");
-                setDraft({
-                  ...draft,
-                  name: event.target.value,
-                });
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            maxHeight: "min(90dvh, 850px)",
+            minHeight: 0,
+            width: "100%",
+            boxSizing: "border-box",
+            overflow: "hidden",
+          }}
+        >
+          {/* Fixed modal header */}
+          <div
+            style={{
+              flexShrink: 0,
+              padding: "28px 30px 18px",
+              background: "#ffffff",
+            }}
+          >
+            <h2
+              id="setup-title"
+              style={{
+                margin: "0 0 8px",
+                fontSize: "24px",
+                fontWeight: 700,
+                color: "#102344",
               }}
-            />
-          </label>
+            >
+              {data
+                ? "Edit Your Information"
+                : "Set Up Your Dashboard"}
+            </h2>
 
-          {[
-            {
-              key: "heartRate",
-              label: "Heart Rate (bpm)",
-              placeholder: "e.g. 72",
-              min: 1,
-              step: "any",
-            },
-            {
-              key: "bloodPressure",
-              label: "Blood Pressure (mm Hg)",
-              placeholder: "e.g. 120",
-              min: 1,
-              step: "any",
-            },
-            {
-              key: "sleepHours",
-              label: "Sleep (hours)",
-              placeholder: "e.g. 8",
-              min: 0,
-              max: 24,
-              step: "any",
-            },
-            {
-              key: "stressLevel",
-              label: "Stress Level (0–10)",
-              placeholder: "e.g. 3",
-              min: 0,
-              max: 10,
-              step: "any",
-            },
-          ].map(({ key, label, placeholder, ...constraints }) => (
-            <label key={key}>
-              {label}
-              <input
-                type="number"
-                required
-                placeholder={placeholder}
-                {...constraints}
-                value={draft[key]}
-                onChange={(event) =>
-                  setDraft({
-                    ...draft,
-                    [key]: event.target.value,
-                  })
-                }
-              />
-            </label>
-          ))}
+            <p
+              id="setup-description"
+              className="muted"
+              style={{
+                margin: 0,
+                fontSize: "13px",
+                lineHeight: 1.6,
+              }}
+            >
+              {data
+                ? "Update your health information below."
+                : "Complete the required fields to set up your dashboard."}
+            </p>
+          </div>
 
-          <div className="form-actions">
-            {data && (
-              <button
-                type="button"
-                className="dashboard-cancel"
-                onClick={() => {
-                  setDraft(data);
-                  setIsEditing(false);
+          {/* Form fills remaining modal height */}
+          <form
+            onSubmit={saveData}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              flex: "1 1 auto",
+              minHeight: 0,
+              margin: 0,
+              padding: 0,
+              overflow: "hidden",
+            }}
+          >
+            {/* Single scrollable form area */}
+            <div
+              style={{
+                flex: "1 1 auto",
+                minHeight: 0,
+                overflowY: "auto",
+                overflowX: "hidden",
+                padding: "8px 30px 22px",
+                scrollbarWidth: "thin",
+                scrollbarColor:
+                  "#b9a2df transparent",
+                boxSizing: "border-box",
+              }}
+            >
+              <label>
+                Display Name
+
+                <input
+                  name="name"
+                  type="text"
+                  required
+                  autoFocus
+                  maxLength={50}
+                  placeholder="Enter your name"
+                  value={draft.name}
+                  onChange={(event) => {
+                    event.target.setCustomValidity("");
+
+                    setDraft({
+                      ...draft,
+                      name: event.target.value,
+                    });
+                  }}
+                />
+              </label>
+
+              <p
+                className="muted"
+                style={{
+                  margin: "18px 0 22px",
+                  fontSize: "12px",
+                  lineHeight: 1.6,
                 }}
               >
-                Cancel
-              </button>
-            )}
+                Additional measurements are optional.
+                Leave any unknown measurements blank.
+              </p>
 
-            <button type="submit" className="primary">
-              {data ? "Save Changes" : "View Dashboard"}
-            </button>
-          </div>
-        </form>
+              {sections.map((section) => (
+                <fieldset
+                  key={section.title}
+                  style={{
+                    minWidth: 0,
+                    border:
+                      "1px solid #e4d9f6",
+                    borderRadius: "12px",
+                    padding: "16px",
+                    margin: "0 0 20px",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <legend
+                    style={{
+                      color: "#7534d8",
+                      fontSize: "15px",
+                      fontWeight: 700,
+                      padding: "0 8px",
+                    }}
+                  >
+                    {section.title}
+                  </legend>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "14px",
+                    }}
+                  >
+                    {section.fields.map((field) => (
+                      <label
+                        key={field.key}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "7px",
+                          margin: 0,
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          color: "#102344",
+                        }}
+                      >
+                        <span>
+                          {field.label}
+                          {field.required
+                            ? " *"
+                            : " (optional)"}
+                        </span>
+
+                        <input
+                          type={
+                            field.text
+                              ? "text"
+                              : "number"
+                          }
+                          min={field.min}
+                          max={field.max}
+                          step={
+                            field.text
+                              ? undefined
+                              : "any"
+                          }
+                          maxLength={
+                            field.text
+                              ? 300
+                              : undefined
+                          }
+                          required={Boolean(
+                            field.required
+                          )}
+                          value={
+                            draft[field.key] ?? ""
+                          }
+                          onChange={(event) =>
+                            setDraft((current) => ({
+                              ...current,
+                              [field.key]:
+                                event.target.value,
+                            }))
+                          }
+                          style={{
+                            display: "block",
+                            width: "100%",
+                            minWidth: 0,
+                            height: "44px",
+                            padding: "10px 12px",
+                            margin: 0,
+                            boxSizing: "border-box",
+                            border:
+                              "1px solid #b6c8e4",
+                            borderRadius: "10px",
+                            background: "#ffffff",
+                            color: "#102344",
+                            fontSize: "14px",
+                            outlineOffset: "2px",
+                          }}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              ))}
+
+              {error && (
+                <p
+                  role="alert"
+                  style={{
+                    color: "#b42318",
+                    fontSize: "13px",
+                    marginTop: "10px",
+                  }}
+                >
+                  {error}
+                </p>
+              )}
+            </div>
+
+            {/* Fixed footer - always visible */}
+            <div
+              className="form-actions"
+              style={{
+                display: "flex",
+                flexShrink: 0,
+                justifyContent: "flex-end",
+                alignItems: "center",
+                gap: "12px",
+                padding: "18px 30px",
+                margin: 0,
+                borderTop:
+                  "1px solid #eee8f7",
+                background: "#ffffff",
+                boxSizing: "border-box",
+              }}
+            >
+              {data && (
+                <button
+                  type="button"
+                  className="dashboard-cancel"
+                  onClick={handleCancel}
+                  disabled={saving}
+                  style={{
+                    margin: 0,
+                    minHeight: "42px",
+                    padding: "10px 20px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
+
+              <button
+                type="submit"
+                className="primary"
+                disabled={saving}
+                style={{
+                  margin: 0,
+                  minHeight: "42px",
+                  padding: "10px 22px",
+                  background: "#7534d8",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "10px",
+                  fontWeight: 600,
+                  whiteSpace: "nowrap",
+                  cursor: saving
+                    ? "wait"
+                    : "pointer",
+                }}
+              >
+                {saving
+                  ? "Saving..."
+                  : data
+                  ? "Save Changes"
+                  : "View Dashboard"}
+              </button>
+            </div>
+          </form>
+        </div>
       </dialog>
     </div>
   );
