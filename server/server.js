@@ -3,8 +3,9 @@ import cors from "cors";
 import db from "./db.js";
 
 const app = express();
-app.use(cors());          // lets the React site (port 5173) call this server
-app.use(express.json());  // reads JSON sent from the front end
+
+app.use(cors());
+app.use(express.json());
 
 // ---------- Health check ----------
 
@@ -12,133 +13,622 @@ app.get("/api/health", (req, res) => {
   res.json({ ok: true });
 });
 
-// ---------- Readings (heart rate, blood pressure, temperature...) ----------
+// ---------- Health readings ----------
 
-// All readings, newest first
 app.get("/api/readings", (req, res) => {
   const rows = db
-    .prepare("SELECT * FROM readings ORDER BY recorded_at DESC, id DESC LIMIT 200")
+    .prepare(`
+      SELECT *
+      FROM readings
+      ORDER BY recorded_at DESC, id DESC
+      LIMIT 200
+    `)
     .all();
+
   res.json(rows);
 });
 
-// The most recent reading of each type (for the Body Map and dashboard)
 app.get("/api/readings/latest", (req, res) => {
   const rows = db
-    .prepare("SELECT * FROM readings WHERE id IN (SELECT MAX(id) FROM readings GROUP BY type)")
+    .prepare(`
+      SELECT *
+      FROM readings
+      WHERE id IN (
+        SELECT MAX(id)
+        FROM readings
+        GROUP BY type
+      )
+    `)
     .all();
+
   res.json(rows);
 });
 
-// Save a new reading
 app.post("/api/readings", (req, res) => {
   const { type, value, unit } = req.body;
+
   if (!type || value === undefined || value === "") {
-    return res.status(400).json({ error: "type and value are required" });
+    return res.status(400).json({
+      error: "type and value are required",
+    });
   }
+
   const result = db
-    .prepare("INSERT INTO readings (type, value, unit) VALUES (?, ?, ?)")
+    .prepare(`
+      INSERT INTO readings (type, value, unit)
+      VALUES (?, ?, ?)
+    `)
     .run(type, String(value), unit ?? null);
-  const row = db.prepare("SELECT * FROM readings WHERE id = ?").get(result.lastInsertRowid);
+
+  const row = db
+    .prepare("SELECT * FROM readings WHERE id = ?")
+    .get(result.lastInsertRowid);
+
   res.status(201).json(row);
 });
 
-// ---------- Daily check-ins (mood, stress, sleep, symptoms) ----------
+// ---------- Daily check-ins ----------
 
 app.get("/api/checkins", (req, res) => {
   const rows = db
-    .prepare("SELECT * FROM checkins ORDER BY created_at DESC, id DESC LIMIT 100")
+    .prepare(`
+      SELECT *
+      FROM checkins
+      ORDER BY created_at DESC, id DESC
+      LIMIT 100
+    `)
     .all();
+
   res.json(rows);
 });
 
 app.post("/api/checkins", (req, res) => {
-  const { mood, stress, sleep_hours, symptoms, notes } = req.body;
+  const {
+    mood,
+    stress,
+    sleep_hours,
+    symptoms,
+    notes,
+  } = req.body;
+
   const result = db
-    .prepare(
-      "INSERT INTO checkins (mood, stress, sleep_hours, symptoms, notes) VALUES (?, ?, ?, ?, ?)"
-    )
-    .run(mood ?? null, stress ?? null, sleep_hours ?? null, symptoms ?? null, notes ?? null);
-  const row = db.prepare("SELECT * FROM checkins WHERE id = ?").get(result.lastInsertRowid);
+    .prepare(`
+      INSERT INTO checkins
+      (mood, stress, sleep_hours, symptoms, notes)
+      VALUES (?, ?, ?, ?, ?)
+    `)
+    .run(
+      mood ?? null,
+      stress ?? null,
+      sleep_hours ?? null,
+      symptoms ?? null,
+      notes ?? null
+    );
+
+  const row = db
+    .prepare("SELECT * FROM checkins WHERE id = ?")
+    .get(result.lastInsertRowid);
+
   res.status(201).json(row);
 });
 
-// ---------- Space weather from NASA DONKI ----------
+// ---------- Dashboard ----------
 
-// Reads one type of DONKI event (FLR = solar flares, SEP = solar energetic particles)
-async function getDonki(type, startDate, endDate) {
-  const key = process.env.NASA_API_KEY || "DEMO_KEY";
-  const url = `https://api.nasa.gov/DONKI/${type}?startDate=${startDate}&endDate=${endDate}&api_key=${key}`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`DONKI ${type} returned ${response.status}`);
-  const text = await response.text();
-  return text ? JSON.parse(text) : []; // DONKI can return an empty body when there are no events
+// Required measurements from the original Dashboard.
+const REQUIRED_FIELDS = {
+  heartRate: {
+    min: 1,
+    max: 300,
+  },
+  bloodPressure: {
+    min: 1,
+    max: 300,
+  },
+  sleepHours: {
+    min: 0,
+    max: 24,
+  },
+  stressLevel: {
+    min: 0,
+    max: 10,
+  },
+};
+
+// Additional measurements from the expanded Dashboard.
+const OPTIONAL_FIELDS = {
+  diastolic: {
+    type: "blood_pressure_diastolic",
+    unit: "mmHg",
+    min: 1,
+    max: 300,
+  },
+
+  mood: {
+    type: "mood",
+    unit: "/5",
+    min: 1,
+    max: 5,
+  },
+
+  oxygenLevel: {
+    type: "oxygen_level",
+    unit: "%",
+    min: 0,
+    max: 100,
+  },
+
+  temperature: {
+    type: "temperature",
+    unit: "°C",
+    min: 20,
+    max: 45,
+  },
+
+  bloodSugar: {
+    type: "blood_sugar",
+    unit: "mg/dL",
+    min: 1,
+    max: 1000,
+  },
+
+  waterIntake: {
+    type: "water_intake",
+    unit: "L",
+    min: 0,
+    max: 30,
+  },
+
+  exercise: {
+    type: "exercise",
+    unit: "min",
+    min: 0,
+    max: 1440,
+  },
+
+  visionCheck: {
+    type: "vision_check",
+    unit: null,
+    text: true,
+  },
+
+  nausea: {
+    type: "nausea",
+    unit: "/10",
+    min: 0,
+    max: 10,
+  },
+
+  dizziness: {
+    type: "dizziness",
+    unit: "/10",
+    min: 0,
+    max: 10,
+  },
+
+  radiationDose: {
+    type: "radiation_dose",
+    unit: "mSv",
+    min: 0,
+    max: 100000,
+  },
+};
+
+// Convert empty optional measurements to null.
+function normalizeOptionalFields(input) {
+  const result = {};
+
+  for (const [key, config] of Object.entries(
+    OPTIONAL_FIELDS
+  )) {
+    const value = input[key];
+
+    if (
+      value === undefined ||
+      value === null ||
+      value === ""
+    ) {
+      result[key] = null;
+      continue;
+    }
+
+    if (config.text) {
+      if (
+        typeof value !== "string" ||
+        value.length > 300
+      ) {
+        throw new Error(
+          `${key} must be text with at most 300 characters.`
+        );
+      }
+
+      result[key] = value.trim() || null;
+      continue;
+    }
+
+    const number = Number(value);
+
+    if (
+      !Number.isFinite(number) ||
+      number < config.min ||
+      number > config.max
+    ) {
+      throw new Error(
+        `${key} must be between ${config.min} and ${config.max}.`
+      );
+    }
+
+    result[key] = number;
+  }
+
+  return result;
 }
 
-let spaceWeatherCache = null; // keeps results for 10 minutes to stay under NASA's request limit
+// Convert a database row into the format React expects.
+function formatDashboard(row) {
+  if (!row) {
+    return null;
+  }
+
+  let extras = {};
+
+  if (row.extra_json) {
+    try {
+      extras = JSON.parse(row.extra_json);
+    } catch (error) {
+      console.error(
+        "Could not parse saved optional measurements:",
+        error
+      );
+    }
+  }
+
+  return {
+    name: row.name,
+    heartRate: row.heart_rate,
+    bloodPressure: row.blood_pressure,
+    sleepHours: row.sleep_hours,
+    stressLevel: row.stress_level,
+    ...Object.fromEntries(
+      Object.keys(OPTIONAL_FIELDS).map((key) => [
+        key,
+        extras[key] ?? null,
+      ])
+    ),
+  };
+}
+
+// Retrieve the latest saved Dashboard.
+app.get("/api/dashboard", (req, res) => {
+  try {
+    const row = db
+      .prepare(`
+        SELECT *
+        FROM dashboard_snapshots
+        WHERE astronaut_id = 1
+        ORDER BY id DESC
+        LIMIT 1
+      `)
+      .get();
+
+    res.json(formatDashboard(row));
+  } catch (error) {
+    console.error("Dashboard GET error:", error);
+
+    res.status(500).json({
+      error: "Could not retrieve dashboard data.",
+    });
+  }
+});
+
+// Save a complete Dashboard snapshot.
+const saveDashboard = db.transaction((data) => {
+  const {
+    name,
+    heartRate,
+    bloodPressure,
+    sleepHours,
+    stressLevel,
+    optional,
+  } = data;
+
+  const snapshotResult = db
+    .prepare(`
+      INSERT INTO dashboard_snapshots
+      (
+        astronaut_id,
+        name,
+        heart_rate,
+        blood_pressure,
+        sleep_hours,
+        stress_level,
+        extra_json
+      )
+      VALUES (1, ?, ?, ?, ?, ?, ?)
+    `)
+    .run(
+      name,
+      heartRate,
+      bloodPressure,
+      sleepHours,
+      stressLevel,
+      JSON.stringify(optional)
+    );
+
+  const insertReading = db.prepare(`
+    INSERT INTO readings
+    (astronaut_id, type, value, unit)
+    VALUES (1, ?, ?, ?)
+  `);
+
+  // Original measurements.
+  insertReading.run(
+    "heart_rate",
+    String(heartRate),
+    "bpm"
+  );
+
+  insertReading.run(
+    "blood_pressure",
+    String(bloodPressure),
+    "mmHg"
+  );
+
+  insertReading.run(
+    "stress_level",
+    String(stressLevel),
+    "/10"
+  );
+
+  // Save each provided optional measurement.
+  for (const [key, config] of Object.entries(
+    OPTIONAL_FIELDS
+  )) {
+    const value = optional[key];
+
+    if (value !== null) {
+      insertReading.run(
+        config.type,
+        String(value),
+        config.unit
+      );
+    }
+  }
+
+  // Preserve the existing check-in functionality.
+  db.prepare(`
+    INSERT INTO checkins
+    (
+      astronaut_id,
+      mood,
+      stress,
+      sleep_hours
+    )
+    VALUES (1, ?, ?, ?)
+  `).run(
+    optional.mood,
+    stressLevel,
+    sleepHours
+  );
+
+  return snapshotResult.lastInsertRowid;
+});
+
+app.post("/api/dashboard", (req, res) => {
+  const input = req.body ?? {};
+
+  const name =
+    typeof input.name === "string"
+      ? input.name.trim()
+      : "";
+
+  if (!name || name.length > 50) {
+    return res.status(400).json({
+      error: "Please enter a valid display name.",
+    });
+  }
+
+  const required = {};
+
+  for (const [key, config] of Object.entries(
+    REQUIRED_FIELDS
+  )) {
+    const value = input[key];
+
+    if (
+      value === undefined ||
+      value === null ||
+      value === ""
+    ) {
+      return res.status(400).json({
+        error: `${key} is required.`,
+      });
+    }
+
+    const number = Number(value);
+
+    if (
+      !Number.isFinite(number) ||
+      number < config.min ||
+      number > config.max
+    ) {
+      return res.status(400).json({
+        error:
+          `${key} must be between ` +
+          `${config.min} and ${config.max}.`,
+      });
+    }
+
+    required[key] = number;
+  }
+
+  let optional;
+
+  try {
+    optional = normalizeOptionalFields(input);
+  } catch (error) {
+    return res.status(400).json({
+      error: error.message,
+    });
+  }
+
+  try {
+    const data = {
+      name,
+      ...required,
+      optional,
+    };
+
+    saveDashboard(data);
+
+    res.status(201).json({
+      name,
+      ...required,
+      ...optional,
+    });
+  } catch (error) {
+    console.error("Dashboard POST error:", error);
+
+    res.status(500).json({
+      error: "Could not save dashboard data.",
+    });
+  }
+});
+
+// ---------- NASA space weather ----------
+
+async function getDonki(type, startDate, endDate) {
+  const key =
+    process.env.NASA_API_KEY || "DEMO_KEY";
+
+  const url =
+    `https://api.nasa.gov/DONKI/${type}` +
+    `?startDate=${startDate}` +
+    `&endDate=${endDate}` +
+    `&api_key=${key}`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(
+      `DONKI ${type} returned ${response.status}`
+    );
+  }
+
+  const text = await response.text();
+
+  return text ? JSON.parse(text) : [];
+}
+
+let spaceWeatherCache = null;
 
 app.get("/api/space-weather", async (req, res) => {
-  if (spaceWeatherCache && Date.now() - spaceWeatherCache.time < 10 * 60 * 1000) {
+  if (
+    spaceWeatherCache &&
+    Date.now() - spaceWeatherCache.time <
+      10 * 60 * 1000
+  ) {
     return res.json(spaceWeatherCache.data);
   }
 
-  const day = (d) => d.toISOString().slice(0, 10);
+  const day = (date) =>
+    date.toISOString().slice(0, 10);
+
   const today = new Date();
-  const threeDaysAgo = new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000);
+
+  const threeDaysAgo = new Date(
+    today.getTime() - 3 * 24 * 60 * 60 * 1000
+  );
 
   try {
     const [flares, particles] = await Promise.all([
-      getDonki("FLR", day(threeDaysAgo), day(today)),
-      getDonki("SEP", day(threeDaysAgo), day(today)),
+      getDonki(
+        "FLR",
+        day(threeDaysAgo),
+        day(today)
+      ),
+      getDonki(
+        "SEP",
+        day(threeDaysAgo),
+        day(today)
+      ),
     ]);
 
-    // Simplified demo rule: particle event = danger, strong (M or X class) flare = caution
-    const strongFlares = flares.filter((f) => /^[MX]/.test(f.classType || ""));
-    const status = particles.length > 0 ? "danger" : strongFlares.length > 0 ? "caution" : "safe";
+    const strongFlares = flares.filter((flare) =>
+      /^[MX]/.test(flare.classType || "")
+    );
+
+    const status =
+      particles.length > 0
+        ? "danger"
+        : strongFlares.length > 0
+        ? "caution"
+        : "safe";
 
     const data = {
       status,
       solarFlares: flares.length,
       strongFlares: strongFlares.length,
       particleEvents: particles.length,
-      latestFlareClass: flares.length ? flares[flares.length - 1].classType : null,
+      latestFlareClass: flares.length
+        ? flares[flares.length - 1].classType
+        : null,
       source: "NASA DONKI",
       checkedAt: new Date().toISOString(),
     };
 
-    spaceWeatherCache = { time: Date.now(), data };
+    spaceWeatherCache = {
+      time: Date.now(),
+      data,
+    };
+
     res.json(data);
-  } catch (err) {
-    res.status(502).json({ error: "Could not reach NASA DONKI", details: err.message });
+  } catch (error) {
+    res.status(502).json({
+      error: "Could not reach NASA DONKI",
+      details: error.message,
+    });
   }
 });
 
-// ---------- Start the server ----------
-
-const PORT = 3001;
+// ---------- NASA sleep research ----------
 
 app.get("/api/nasa/sleep/subjects", (req, res) => {
-  const subjects = db.prepare(`
-    SELECT subject_id, COUNT(*) AS total_records
-    FROM nasa_sleep_records
-    GROUP BY subject_id
-    ORDER BY subject_id
-  `).all();
+  const subjects = db
+    .prepare(`
+      SELECT
+        subject_id,
+        COUNT(*) AS total_records
+      FROM nasa_sleep_records
+      GROUP BY subject_id
+      ORDER BY subject_id
+    `)
+    .all();
 
   res.json(subjects);
 });
 
-app.get("/api/nasa/sleep/:subjectId", (req, res) => {
-  const records = db.prepare(`
-    SELECT *
-    FROM nasa_sleep_records
-    WHERE subject_id = ?
-    ORDER BY measurement_date ASC, id ASC
-  `).all(req.params.subjectId);
+app.get(
+  "/api/nasa/sleep/:subjectId",
+  (req, res) => {
+    const records = db
+      .prepare(`
+        SELECT *
+        FROM nasa_sleep_records
+        WHERE subject_id = ?
+        ORDER BY measurement_date ASC, id ASC
+      `)
+      .all(req.params.subjectId);
 
-  res.json(records);
-});
+    res.json(records);
+  }
+);
+
+// ---------- Start server ----------
+
+const PORT = 3001;
 
 app.listen(PORT, () => {
-  console.log(`AstroHealth server running at http://localhost:${PORT}`);
+  console.log(
+    `AstroHealth server running at http://localhost:${PORT}`
+  );
 });
