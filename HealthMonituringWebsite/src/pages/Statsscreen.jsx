@@ -1,7 +1,9 @@
 import HealthHeader from './Healthheader'
 import { getCurrent, isNormal } from './Healthdata'
+import { Navigate, useNavigate } from 'react-router-dom';
 
-export default function StatsScreen({ title, metrics, active, onSwitch, onSeeTrends, onBack }) {
+export default function StatsScreen({ title, metrics, active, onSwitch, onSeeTrends }) {
+  const navigate = useNavigate();
   return (
     <div className="hs-page">
       <HealthHeader title={title} />
@@ -9,13 +11,13 @@ export default function StatsScreen({ title, metrics, active, onSwitch, onSeeTre
       <div className="hs-switch">
         <button
           className={'hs-switch-button' + (active === 'physical' ? ' hs-switch-active' : '')}
-          onClick={() => onSwitch('physical')}
+          onClick={() => navigate("/physical-stats")}
         >
           Physical Health
         </button>
         <button
           className={'hs-switch-button' + (active === 'mental' ? ' hs-switch-active' : '')}
-          onClick={() => onSwitch('mental')}
+          onClick={() => navigate("/mental-stats")}
         >
           Mental Health
         </button>
@@ -44,7 +46,7 @@ export default function StatsScreen({ title, metrics, active, onSwitch, onSeeTre
           )
         })}
         <div className="hs-footer">
-          <button className="hs-button" onClick={onBack}>
+          <button className="hs-button" onClick={() => navigate("/dashboard")}>
             Back
           </button>
         </div>

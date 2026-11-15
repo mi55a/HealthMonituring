@@ -1,7 +1,9 @@
 import HealthHeader from './Healthheader'
 import TrendChart from './Trendchart'
+import { Navigate, useNavigate } from 'react-router-dom'
 
-export default function TrendScreen({ title, metric, onBack }) {
+export default function TrendScreen({ title, metric}) {
+  const navigate = useNavigate();
   return (
     <div className="hs-page">
       <HealthHeader title={title} />
@@ -17,7 +19,7 @@ export default function TrendScreen({ title, metric, onBack }) {
           <p className="hs-legend">No data found for this metric.</p>
         )}
         <div className="hs-footer">
-          <button className="hs-button" onClick={onBack}>
+          <button className="hs-button" onClick={() => navigate("/dashboard")}>
             Back
           </button>
         </div>

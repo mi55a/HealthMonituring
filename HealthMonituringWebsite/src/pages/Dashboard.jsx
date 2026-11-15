@@ -3,6 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProfileDropdown from "./ProfileDropdown";
 
+
+
+
 import "./WelcomePage.css";
 import "./Dashboard.css";
 
@@ -394,13 +397,15 @@ export default function Dashboard() {
           </h2>
 
           <div className="actions">
-            <button type="button" disabled>
-              Physical Health Stats
-            </button>
+              <button 
+                type="button" onClick={() => navigate("/physical-stats")}>
+                Physical Health Stats
+              </button>
 
-            <button type="button" disabled>
-              Mental Health Stats
-            </button>
+              <button 
+                type="button" onClick={() => navigate("/mental-stats")}>
+                Mental Health Stats
+              </button>
 
             <button
               type="button"
