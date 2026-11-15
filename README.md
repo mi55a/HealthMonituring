@@ -8,6 +8,6 @@ Team Members include:
 - Ryan Puska: (LinkedIn)
 - Nour Belkadi: (LinkedIn)
 - Alexis Valdivia: (LinkedIn)
-- Vinuthna Depala: (LinkedIn)
+- Vinuthna Depala: (LinkedIn)(https://www.linkedin.com/in/vinuthna-depala-654a21287/)
 
 
