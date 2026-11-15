@@ -1,13 +1,8 @@
-import HealthHeader from './Healthheader'
+import TrendScreen from './Trendscreen'
+import { MENTAL_METRICS } from './Healthdata'
 
-export default function MentalTrend({ metric, onBack }) {
-  return (
-    <div>
-      <HealthHeader title={metric + ' (all time):'} />
-      <div className="hs-chart-box">Chart goes here</div>
-      <button className="hs-button hs-back" onClick={onBack}>
-        Back
-      </button>
-    </div>
-  )
+export default function MentalTrend({ metricKey, onBack }) {
+  const metric = MENTAL_METRICS.find((m) => m.key === metricKey)
+  const title = metric ? metric.name + ' (all time):' : 'Trend not found'
+  return <TrendScreen title={title} metric={metric} onBack={onBack} />
 }
