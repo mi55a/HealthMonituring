@@ -1,0 +1,83 @@
+.hs-header {
+  display: flex;
+  align-items: center;
+  background: #c5dcff;
+  padding: 10px 20px;
+  border-bottom: 1px solid #99a;
+}
+.hs-header h1 {
+  flex: 1;
+  text-align: center;
+  margin: 0;
+  font-size: 28px;
+}
+.hs-gear {
+  font-size: 24px;
+  margin-right: 8px;
+}
+.hs-profile {
+  font-size: 10px;
+}
+
+.hs-panel {
+  background: #c5dcff;
+  border: 1px solid #99a;
+  margin: 20px;
+  padding: 30px;
+  min-height: 350px;
+  position: relative;
+}
+.hs-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 25px;
+  font-size: 24px;
+}
+.hs-stat-text {
+  flex: 2;
+}
+.hs-status {
+  flex: 1;
+}
+.hs-status.normal {
+  color: #22c55e;
+}
+.hs-status.abnormal {
+  color: #e0b000;
+}
+
+.hs-button {
+  background: #6a2fd8;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 40px;
+  font-size: 16px;
+  cursor: pointer;
+}
+.hs-back {
+  display: block;
+  margin: 0 auto;
+}
+.hs-back-in-panel {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.hs-time {
+  text-align: center;
+  font-size: 22px;
+}
+.hs-chart-box {
+  width: 450px;
+  max-width: 90%;
+  height: 300px;
+  margin: 40px auto;
+  border: 2px dashed #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
